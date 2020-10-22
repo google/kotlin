@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.backend.jvm.codegen
 import org.jetbrains.kotlin.backend.common.psi.PsiSourceManager
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
+import org.jetbrains.kotlin.backend.jvm.ir.isInPublicInlineScope
 import org.jetbrains.kotlin.backend.jvm.lower.MultifileFacadeFileEntry
 import org.jetbrains.kotlin.backend.jvm.lower.buildAssertionsDisabledField
 import org.jetbrains.kotlin.backend.jvm.lower.hasAssertionsDisabledField
@@ -257,7 +258,17 @@ class ClassCodegen private constructor(
             extraFlags = extraFlags or JvmAnnotationNames.METADATA_SCRIPT_FLAG
         }
 
-        writeKotlinMetadata(visitor, state, kind, extraFlags) { av ->
+        // There are three kinds of classes which are regenerated during inlining.
+        // 1) Anonymous classes which are in the scope of an inline function.
+        // 2) SAM wrappers used in an inline function. These are identified by name, since they
+        //    can be reused in different functions and are thus generated in the enclosing top-level
+        //    class instead of inside of an inline function.
+        // 3) WhenMapping classes used from inline functions. These are collected in
+        //    `JvmBackendContext.publicAbiSymbols` in `MappedEnumWhenLowering`.
+        val isPublicAbi = irClass.symbol in context.publicAbiSymbols || irClass.isInlineSamWrapper ||
+                type.isAnonymousClass && irClass.isInPublicInlineScope
+
+        writeKotlinMetadata(visitor, state, kind, isPublicAbi, extraFlags) { av ->
             if (metadata != null) {
                 metadataSerializer.serialize(metadata)?.let { (proto, stringTable) ->
                     DescriptorAsmUtil.writeAnnotationData(av, proto, stringTable)
@@ -453,6 +464,9 @@ class ClassCodegen private constructor(
     private val IrClass.isAnonymousInnerClass: Boolean
         get() = isSamWrapper || name.isSpecial // NB '<Continuation>' is treated as anonymous inner class here
 
+    private val IrClass.isInlineSamWrapper: Boolean
+        get() = isSamWrapper && visibility == DescriptorVisibilities.PUBLIC
+
     private val IrClass.isSamWrapper: Boolean
         get() = origin == IrDeclarationOrigin.GENERATED_SAM_IMPLEMENTATION
 
@@ -578,3 +592,7 @@ private fun storeSerializedIr(av: AnnotationVisitor, serializedIr: ByteArray) {
     }
     partsVisitor.visitEnd()
 }
+
+// From `isAnonymousClass` in inlineCodegenUtils.kt
+private val Type.isAnonymousClass: Boolean
+    get() = internalName.substringAfterLast("$", "").toIntOrNull() != null
