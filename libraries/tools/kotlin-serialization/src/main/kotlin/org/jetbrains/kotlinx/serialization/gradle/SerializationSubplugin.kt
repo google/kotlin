@@ -23,6 +23,7 @@ import org.gradle.api.tasks.compile.AbstractCompile
 import org.gradle.tooling.provider.model.ToolingModelBuilder
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
+import org.jetbrains.kotlin.gradle.internal.AndroidSubplugin
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
@@ -35,6 +36,23 @@ class SerializationGradleSubplugin :
         const val SERIALIZATION_GROUP_NAME = "org.jetbrains.kotlin"
         const val SERIALIZATION_ARTIFACT_NAME = "kotlin-serialization"
         const val SERIALIZATION_ARTIFACT_UNSHADED_NAME = "kotlin-serialization-unshaded"
+    }
+
+    override fun apply(target: Project) {
+        val kotlinPluginVersion = target.getKotlinPluginVersion()
+        println(kotlinPluginVersion)
+
+//        target.dependencies.add(PLUGIN_CLASSPATH_CONFIGURATION_NAME, SERIALIZATION_GROUP_NAME + ":" + SERIALIZATION_ARTIFACT_NAME)
+//        val android = target.extensions.getByType(AndroidComponentsExtension::class.java)
+//        android.onVariants {
+//            it.kotlinCompilerOptions.addPluginArgument(getCompilerPluginId(), SubpluginOption("", ""))
+//        }
+//
+//        target.afterEvaluate {
+//            if (target.plugins.hasPlugin(AndroidSubplugin::class.java)) {
+//                throw GradleException("${target.path}: 'kotlin-parcelize' can't be applied together with 'kotlin-android-extensions'")
+//            }
+//        }
     }
 
     override fun isApplicable(kotlinCompilation: KotlinCompilation<*>): Boolean = true

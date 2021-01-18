@@ -18,6 +18,7 @@ configure<GradlePluginDevelopmentExtension> {
 }
 
 repositories {
+    maven("/home/gavra/projects/studio-main/out/repo")
     google()
     maven("https://plugins.gradle.org/m2/")
 }
@@ -28,6 +29,28 @@ pill {
 
 kotlin.sourceSets.all {
     languageSettings.optIn("kotlin.RequiresOptIn")
+}
+
+sourceSets {
+    "agp72" {
+        compileClasspath += sourceSets.main.get().output
+    }
+}
+
+configurations.getByName("agp72CompileOnly") {
+    extendsFrom(configurations.getByName("compileOnly"))
+}
+configurations.getByName("agp72CompileClasspath") {
+    resolutionStrategy.eachDependency {
+        if (this.requested.group == "com.android.tools.build" && this.requested.name != "gradle-api") {
+            useTarget("com.android.tools.build:gradle-api:7.2.0-dev")
+            because("We should compile only against AGP public API.")
+        }
+    }
+}
+
+configurations.getByName("agp72Implementation") {
+    extendsFrom(configurations.getByName("implementation"))
 }
 
 dependencies {
@@ -70,6 +93,8 @@ dependencies {
     compileOnly("org.codehaus.groovy:groovy-all:2.4.12")
     compileOnly(project(":kotlin-reflect"))
     compileOnly(intellijCore())
+
+    add("agp72CompileOnly", "com.android.tools.build:gradle-api:7.2.0-dev") { isTransitive = false}
 
     runtimeOnly(project(":kotlin-compiler-embeddable"))
     runtimeOnly(project(":kotlin-annotation-processing-gradle"))
@@ -117,7 +142,9 @@ if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
     configurations.api.get().exclude("com.android.tools.external.com-intellij", "intellij-core")
 }
 
-runtimeJar(rewriteDefaultJarDepsToShadedCompiler())
+runtimeJar(rewriteDefaultJarDepsToShadedCompiler()) {
+    this.from(sourceSets.getByName("agp72").output.classesDirs)
+}
 
 tasks {
     named<ProcessResources>("processResources") {
@@ -212,6 +239,11 @@ pluginBundle {
         name = "kotlinMultiplatformPluginPm20",
         id = "org.jetbrains.kotlin.multiplatform.pm20",
         display = "Kotlin Multiplatform plugin with PM2.0"
+    )
+    create(
+        name = "kotlinBasePlugin",
+        id = "org.jetbrains.kotlin.base",
+        display = "Gradle plugin with basic Kotlin support"
     )
 }
 

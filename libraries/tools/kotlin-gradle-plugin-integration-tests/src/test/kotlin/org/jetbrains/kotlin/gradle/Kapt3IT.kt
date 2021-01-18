@@ -837,6 +837,7 @@ open class Kapt3IT : Kapt3BaseIT() {
         }
     }
 
+    // FIX THIS ONE
     @DisplayName("KT-46651: kapt is tracking source files properly with configuration cache enabled")
     @GradleTestVersions(minVersion = TestVersions.Gradle.G_6_7)
     @GradleTest
@@ -855,7 +856,7 @@ open class Kapt3IT : Kapt3BaseIT() {
                 Files.move(this, parent.resolve("UseBar1.kt"))
             }
 
-            build("assemble")
+            build("assemble", enableGradleDebug = true)
         }
     }
 
