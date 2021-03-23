@@ -84,7 +84,7 @@ open class InliningContext(
         newTypeMappings: MutableMap<String, String?>,
         callSiteInfo: InlineCallSiteInfo,
         transformationInfo: TransformationInfo
-    ): InliningContext = RegeneratedClassContext(
+    ): RegeneratedClassContext = RegeneratedClassContext(
         this, state, generator, TypeRemapper.createFrom(typeRemapper, newTypeMappings),
         lambdaInfo, callSiteInfo, transformationInfo
     )
