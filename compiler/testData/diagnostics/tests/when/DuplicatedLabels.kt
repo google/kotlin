@@ -59,3 +59,11 @@ fun fifth(arg: Any?) = when (arg) {
     <!ELSE_MISPLACED_IN_WHEN!>else<!> -> ""
     <!UNREACHABLE_CODE!>else -> null<!>
 }
+
+object Foo
+
+fun sixth(arg: Any?) = when (arg) {
+    Foo -> ""
+    Foo -> ""
+    else -> null
+}
