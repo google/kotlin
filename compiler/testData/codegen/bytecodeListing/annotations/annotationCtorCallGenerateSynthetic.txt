@@ -19,13 +19,13 @@ public final class AnnotationCtorCallGenerateSyntheticKt {
     public final static method box(): void
 }
 
-@java.lang.annotation.Retention
+@java.lang.annotation.Retention(value=RUNTIME)
 @kotlin.Metadata
 public annotation class Bar {
     // source: 'annotationCtorCallGenerateSynthetic.kt'
 }
 
-@java.lang.annotation.Retention
+@java.lang.annotation.Retention(value=RUNTIME)
 @kotlin.Metadata
 public annotation class Foo {
     // source: 'annotationCtorCallGenerateSynthetic.kt'
