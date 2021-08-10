@@ -21689,6 +21689,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
                 }
 
                 @Test
+                @TestMetadata("kotlinStarProjection.kt")
+                public void testKotlinStarProjection() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/platformTypes/genericVarianceViolation/kotlinStarProjection.kt");
+                }
+
+                @Test
                 @TestMetadata("listSuperType.kt")
                 public void testListSuperType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/platformTypes/genericVarianceViolation/listSuperType.kt");
@@ -36333,12 +36339,6 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             @TestMetadata("ea70485_functionTypeInheritor.kt")
             public void testEa70485_functionTypeInheritor() throws Exception {
                 runTest("compiler/testData/diagnostics/testsWithStdLib/regression/ea70485_functionTypeInheritor.kt");
-            }
-
-            @Test
-            @TestMetadata("ea70880_illegalJvmName.kt")
-            public void testEa70880_illegalJvmName() throws Exception {
-                runTest("compiler/testData/diagnostics/testsWithStdLib/regression/ea70880_illegalJvmName.kt");
             }
 
             @Test
