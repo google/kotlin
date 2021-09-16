@@ -1,6 +1,6 @@
 //no nested class access via instance reference error
 fun test() {
-    A.Companion.f(<!ARGUMENT_TYPE_MISMATCH!>""<!>)
+    A.Companion.<!INVISIBLE_REFERENCE!>f<!>("")
 }
 
 class A() {

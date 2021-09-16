@@ -7,7 +7,7 @@ open class A protected constructor(x: Int) {
 }
 
 fun foo() {
-    A(<!NO_VALUE_FOR_PARAMETER!>)<!>
+    <!NONE_APPLICABLE!>A<!>()
     A(1.0)
 }
 

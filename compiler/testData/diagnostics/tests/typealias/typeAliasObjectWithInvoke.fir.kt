@@ -15,7 +15,7 @@ typealias WI = ObjectWithInvoke
 typealias CWI = ClassWithCompanionObjectWithInvoke
 
 val test1 = WI()
-val test2 = WI(<!TOO_MANY_ARGUMENTS!>null<!>)
+val test2 = <!INVISIBLE_REFERENCE!>WI<!>(null)
 
 val test3 = CWI()
 val test4 = CWI("")

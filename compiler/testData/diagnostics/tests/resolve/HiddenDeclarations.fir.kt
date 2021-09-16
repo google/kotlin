@@ -35,15 +35,15 @@ open class A {
     val String.memberExtensionProperty: Int get() = 1
 
     fun foo() {
-        <!INVISIBLE_REFERENCE!>topLevelFun<!>()
-        <!INVISIBLE_REFERENCE, INVISIBLE_REFERENCE!>topLevelProperty<!>++
-        "".<!INVISIBLE_REFERENCE!>topLevelExtensionFun<!>()
-        "".<!INVISIBLE_REFERENCE!>topLevelExtensionProperty<!>
+        <!UNRESOLVED_REFERENCE!>topLevelFun<!>()
+        <!UNRESOLVED_REFERENCE, UNRESOLVED_REFERENCE!>topLevelProperty<!>++
+        "".<!UNRESOLVED_REFERENCE!>topLevelExtensionFun<!>()
+        "".<!UNRESOLVED_REFERENCE!>topLevelExtensionProperty<!>
 
-        <!INVISIBLE_REFERENCE!>memberFun<!>()
-        <!INVISIBLE_REFERENCE!>memberProperty<!>
-        "".<!INVISIBLE_REFERENCE!>memberExtensionFun<!>()
-        "".<!INVISIBLE_REFERENCE!>memberExtensionProperty<!>
+        <!UNRESOLVED_REFERENCE!>memberFun<!>()
+        <!UNRESOLVED_REFERENCE!>memberProperty<!>
+        "".<!UNRESOLVED_REFERENCE!>memberExtensionFun<!>()
+        "".<!UNRESOLVED_REFERENCE!>memberExtensionProperty<!>
 
         A(<!ARGUMENT_TYPE_MISMATCH!>""<!>)
     }
@@ -65,7 +65,7 @@ interface I {
 class B : A(<!ARGUMENT_TYPE_MISMATCH!>""<!>) {
     // still can override it
     override fun <!OVERRIDE_DEPRECATION!>memberFun<!>() {
-        super.<!INVISIBLE_REFERENCE!>memberFun<!>() // but cannot call super :)
+        super.<!UNRESOLVED_REFERENCE!>memberFun<!>() // but cannot call super :)
     }
 }
 

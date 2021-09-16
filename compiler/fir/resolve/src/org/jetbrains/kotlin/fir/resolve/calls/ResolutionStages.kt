@@ -142,7 +142,7 @@ private fun FirExpression.isSuperReferenceExpression(): Boolean {
 
 internal object MapArguments : ResolutionStage() {
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
-        val symbol = candidate.symbol as? FirFunctionSymbol<*> ?: return sink.reportDiagnostic(HiddenCandidate)
+        val symbol = candidate.symbol as? FirFunctionSymbol<*> ?: return sink.reportDiagnostic(VisibilityError)
         val function = symbol.fir
 
         val mapping = context.bodyResolveComponents.mapArguments(callInfo.arguments, function, candidate.originScope)
@@ -221,7 +221,7 @@ internal object CheckVisibility : CheckerStage() {
 
             if (classSymbol is FirRegularClassSymbol) {
                 if (classSymbol.fir.classKind.isSingleton) {
-                    sink.yieldDiagnostic(HiddenCandidate)
+                    sink.yieldDiagnostic(VisibilityError)
                 }
                 checkVisibility(classSymbol.fir, sink, candidate, visibilityChecker)
             }
@@ -235,7 +235,7 @@ internal object CheckVisibility : CheckerStage() {
         visibilityChecker: FirVisibilityChecker
     ): Boolean {
         if (!visibilityChecker.isVisible(declaration, candidate)) {
-            sink.yieldDiagnostic(HiddenCandidate)
+            sink.yieldDiagnostic(VisibilityError)
             return false
         }
         return true
