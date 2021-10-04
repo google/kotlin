@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.expressions.IrSetValue
 import org.jetbrains.kotlin.ir.expressions.impl.*
+import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.symbols.IrVariableSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.IrVariableSymbolImpl
 import org.jetbrains.kotlin.ir.types.*
@@ -39,7 +40,7 @@ class JvmSharedVariablesManager(
         name = Name.identifier("Ref")
     }
 
-    private class RefProvider(val refClass: IrClass, elementType: IrType) {
+    class RefProvider(val refClass: IrClass, elementType: IrType) {
         val refConstructor = refClass.addConstructor {
             origin = IrDeclarationOrigin.IR_BUILTINS_STUB
         }
@@ -75,7 +76,7 @@ class JvmSharedVariablesManager(
         RefProvider(refClass, refClass.typeParameters[0].defaultType)
     }
 
-    private fun getProvider(valueType: IrType): RefProvider =
+    fun getProvider(valueType: IrType): RefProvider =
         if (valueType.isPrimitiveType())
             primitiveRefProviders.getValue(valueType.classifierOrFail)
         else
@@ -146,6 +147,32 @@ class JvmSharedVariablesManager(
             val receiver = IrGetValueImpl(startOffset, endOffset, sharedVariableSymbol)
             IrSetFieldImpl(startOffset, endOffset, provider.elementField.symbol, receiver, unboxedValue, type, origin)
         }
+
+    fun getIrType(originalType: IrType): IrType {
+        val valueType = originalType
+        val provider = getProvider(InlineClassAbi.unboxType(valueType) ?: valueType)
+        val typeArguments = provider.refClass.typeParameters.map { valueType }
+        return provider.refClass.typeWith(typeArguments)
+    }
+
+    fun getSharedValue(sharedVariableSymbol: IrValueSymbol, originalGet: IrGetValue): IrExpression =
+        with(originalGet) {
+            val unboxedType = InlineClassAbi.unboxType(symbol.owner.type)
+            val provider = getProvider(unboxedType ?: symbol.owner.type)
+            val receiver = IrGetValueImpl(startOffset, endOffset, sharedVariableSymbol)
+            val unboxedRead = IrGetFieldImpl(startOffset, endOffset, provider.elementField.symbol, unboxedType ?: type, receiver, origin)
+            unboxedType?.let { unsafeCoerce(unboxedRead, it, symbol.owner.type) } ?: unboxedRead
+        }
+
+    fun setSharedValue(sharedVariableSymbol: IrValueSymbol, originalSet: IrSetValue): IrExpression =
+        with(originalSet) {
+            val unboxedType = InlineClassAbi.unboxType(symbol.owner.type)
+            val unboxedValue = unboxedType?.let { unsafeCoerce(value, symbol.owner.type, it) } ?: value
+            val provider = getProvider(unboxedType ?: symbol.owner.type)
+            val receiver = IrGetValueImpl(startOffset, endOffset, sharedVariableSymbol)
+            IrSetFieldImpl(startOffset, endOffset, provider.elementField.symbol, receiver, unboxedValue, type, origin)
+        }
+
 }
 
 private inline fun IrFactory.addClass(

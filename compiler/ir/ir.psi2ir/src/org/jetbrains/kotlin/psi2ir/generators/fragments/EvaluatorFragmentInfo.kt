@@ -19,8 +19,14 @@ import org.jetbrains.kotlin.descriptors.FunctionDescriptor
  *  This data structure contains "synthesized" descriptors for that class,
  *  method and parameter lay-out.
  */
+
+data class EvaluatorFragmentParameterInfo(
+    val descriptor: DeclarationDescriptor,
+    val isLValue: Boolean,
+)
+
 class EvaluatorFragmentInfo(
     val classDescriptor: ClassDescriptor,
     val methodDescriptor: FunctionDescriptor,
-    val parameters: List<DeclarationDescriptor>
+    val parameters: List<EvaluatorFragmentParameterInfo>,
 )
