@@ -45,11 +45,6 @@ public class CompileAgainstJvmAbiTestGenerated extends AbstractCompileAgainstJvm
         runTest("plugins/jvm-abi-gen/testData/compile/clinit/");
     }
 
-    @TestMetadata("inlineAnnotationInstantiation")
-    public void testInlineAnnotationInstantiation() throws Exception {
-        runTest("plugins/jvm-abi-gen/testData/compile/inlineAnnotationInstantiation/");
-    }
-
     @TestMetadata("inlineAnonymousObject")
     public void testInlineAnonymousObject() throws Exception {
         runTest("plugins/jvm-abi-gen/testData/compile/inlineAnonymousObject/");

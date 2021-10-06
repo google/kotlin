@@ -20,6 +20,7 @@ configurations.getByName("testCompile").extendsFrom(shadows)
 
 dependencies {
     // Should come before compiler dependencies, see comment in "compiler/build.gradle.kts"
+    testRuntimeOnly("org.jetbrains.intellij.deps:asm-all:9.1")
     testRuntimeOnly(intellijDep())
 
     compileOnly(project(":compiler:util"))
