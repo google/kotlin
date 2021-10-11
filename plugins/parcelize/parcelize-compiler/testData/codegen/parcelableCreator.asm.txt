@@ -92,10 +92,10 @@ public final class ParcelableCreatorKt : java/lang/Object {
           INVOKEVIRTUAL (java/lang/reflect/Field, get, (Ljava/lang/Object;)Ljava/lang/Object;)
           ASTORE (1)
           ALOAD (1)
-          INSTANCEOF
+          INSTANCEOF (android/os/Parcelable$Creator)
           IFEQ (L3)
           ALOAD (1)
-          CHECKCAST
+          CHECKCAST (android/os/Parcelable$Creator)
           GOTO (L4)
         LABEL (L3)
           ACONST_NULL
@@ -105,7 +105,7 @@ public final class ParcelableCreatorKt : java/lang/Object {
           IFNONNULL (L5)
         LABEL (L6)
         LINENUMBER (31)
-          NEW
+          NEW (java/lang/IllegalArgumentException)
           DUP
           LDC (Could not access CREATOR field in class )
           LDC (LA;)
@@ -134,10 +134,10 @@ public final class ParcelableCreatorKt : java/lang/Object {
           INVOKEVIRTUAL (java/lang/reflect/Field, get, (Ljava/lang/Object;)Ljava/lang/Object;)
           ASTORE (1)
           ALOAD (1)
-          INSTANCEOF
+          INSTANCEOF (android/os/Parcelable$Creator)
           IFEQ (L11)
           ALOAD (1)
-          CHECKCAST
+          CHECKCAST (android/os/Parcelable$Creator)
           GOTO (L12)
         LABEL (L11)
           ACONST_NULL
@@ -147,7 +147,7 @@ public final class ParcelableCreatorKt : java/lang/Object {
           IFNONNULL (L13)
         LABEL (L14)
         LINENUMBER (33)
-          NEW
+          NEW (java/lang/IllegalArgumentException)
           DUP
           LDC (Could not access CREATOR field in class )
           LDC (LB;)
@@ -176,10 +176,10 @@ public final class ParcelableCreatorKt : java/lang/Object {
           INVOKEVIRTUAL (java/lang/reflect/Field, get, (Ljava/lang/Object;)Ljava/lang/Object;)
           ASTORE (1)
           ALOAD (1)
-          INSTANCEOF
+          INSTANCEOF (android/os/Parcelable$Creator)
           IFEQ (L19)
           ALOAD (1)
-          CHECKCAST
+          CHECKCAST (android/os/Parcelable$Creator)
           GOTO (L20)
         LABEL (L19)
           ACONST_NULL
@@ -189,7 +189,7 @@ public final class ParcelableCreatorKt : java/lang/Object {
           IFNONNULL (L21)
         LABEL (L22)
         LINENUMBER (35)
-          NEW
+          NEW (java/lang/IllegalArgumentException)
           DUP
           LDC (Could not access CREATOR field in class )
           LDC (LC;)
@@ -221,7 +221,7 @@ public final class ParcelableCreatorKt : java/lang/Object {
           LDC (T)
           INVOKESTATIC (kotlin/jvm/internal/Intrinsics, reifiedOperationMarker, (ILjava/lang/String;)V)
           LDC (Landroid/os/Parcelable;)
-          CHECKCAST
+          CHECKCAST (java/lang/Class)
         LABEL (L2)
         LINENUMBER (36)
           LDC (CREATOR)
@@ -230,10 +230,10 @@ public final class ParcelableCreatorKt : java/lang/Object {
           INVOKEVIRTUAL (java/lang/reflect/Field, get, (Ljava/lang/Object;)Ljava/lang/Object;)
           ASTORE (2)
           ALOAD (2)
-          INSTANCEOF
+          INSTANCEOF (android/os/Parcelable$Creator)
           IFEQ (L3)
           ALOAD (2)
-          CHECKCAST
+          CHECKCAST (android/os/Parcelable$Creator)
           GOTO (L4)
         LABEL (L3)
           ACONST_NULL
@@ -243,7 +243,7 @@ public final class ParcelableCreatorKt : java/lang/Object {
           IFNONNULL (L5)
         LABEL (L6)
         LINENUMBER (37)
-          NEW
+          NEW (java/lang/IllegalArgumentException)
           DUP
           LDC (Could not access CREATOR field in class )
           ICONST_4
@@ -258,7 +258,7 @@ public final class ParcelableCreatorKt : java/lang/Object {
         LABEL (L5)
         LINENUMBER (36)
           ALOAD (3)
-          CHECKCAST
+          CHECKCAST (android/os/Parcelable$Creator)
         LABEL (L7)
         LINENUMBER (37)
           NOP
@@ -289,10 +289,10 @@ public final class ParcelableCreatorKt : java/lang/Object {
           INVOKEVIRTUAL (java/lang/reflect/Field, get, (Ljava/lang/Object;)Ljava/lang/Object;)
           ASTORE (2)
           ALOAD (2)
-          INSTANCEOF
+          INSTANCEOF (android/os/Parcelable$Creator)
           IFEQ (L4)
           ALOAD (2)
-          CHECKCAST
+          CHECKCAST (android/os/Parcelable$Creator)
           GOTO (L5)
         LABEL (L4)
           ACONST_NULL
@@ -302,7 +302,7 @@ public final class ParcelableCreatorKt : java/lang/Object {
           IFNONNULL (L6)
         LABEL (L7)
         LINENUMBER (40)
-          NEW
+          NEW (java/lang/IllegalArgumentException)
           DUP
           LDC (Could not access CREATOR field in class )
           LDC (LA;)

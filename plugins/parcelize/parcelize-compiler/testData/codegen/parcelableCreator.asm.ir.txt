@@ -101,7 +101,7 @@ public final class ParcelableCreatorKt : java/lang/Object {
           LDC (T)
           INVOKESTATIC (kotlin/jvm/internal/Intrinsics, reifiedOperationMarker, (ILjava/lang/String;)V)
           LDC (Landroid/os/Parcelable;)
-          CHECKCAST
+          CHECKCAST (java/lang/Class)
         LABEL (L2)
         LINENUMBER (30)
           LDC (CREATOR)
@@ -110,10 +110,10 @@ public final class ParcelableCreatorKt : java/lang/Object {
           INVOKEVIRTUAL (java/lang/reflect/Field, get, (Ljava/lang/Object;)Ljava/lang/Object;)
           ASTORE (2)
           ALOAD (2)
-          INSTANCEOF
+          INSTANCEOF (android/os/Parcelable$Creator)
           IFEQ (L3)
           ALOAD (2)
-          CHECKCAST
+          CHECKCAST (android/os/Parcelable$Creator)
           GOTO (L4)
         LABEL (L3)
           ACONST_NULL
@@ -123,7 +123,7 @@ public final class ParcelableCreatorKt : java/lang/Object {
           IFNONNULL (L5)
         LABEL (L6)
         LINENUMBER (31)
-          NEW
+          NEW (java/lang/IllegalArgumentException)
           DUP
           LDC (Could not access CREATOR field in class )
           ICONST_4
@@ -138,7 +138,7 @@ public final class ParcelableCreatorKt : java/lang/Object {
         LABEL (L5)
         LINENUMBER (30)
           ALOAD (3)
-          CHECKCAST
+          CHECKCAST (android/os/Parcelable$Creator)
         LABEL (L7)
         LINENUMBER (31)
           NOP
@@ -169,10 +169,10 @@ public final class ParcelableCreatorKt : java/lang/Object {
           INVOKEVIRTUAL (java/lang/reflect/Field, get, (Ljava/lang/Object;)Ljava/lang/Object;)
           ASTORE (2)
           ALOAD (2)
-          INSTANCEOF
+          INSTANCEOF (android/os/Parcelable$Creator)
           IFEQ (L4)
           ALOAD (2)
-          CHECKCAST
+          CHECKCAST (android/os/Parcelable$Creator)
           GOTO (L5)
         LABEL (L4)
           ACONST_NULL
@@ -182,7 +182,7 @@ public final class ParcelableCreatorKt : java/lang/Object {
           IFNONNULL (L6)
         LABEL (L7)
         LINENUMBER (34)
-          NEW
+          NEW (java/lang/IllegalArgumentException)
           DUP
           LDC (Could not access CREATOR field in class )
           LDC (LA;)
