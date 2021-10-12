@@ -31,6 +31,23 @@ object JvmFlag {
         val IS_MOVED_FROM_INTERFACE_COMPANION = booleanFlag(JF.IS_MOVED_FROM_INTERFACE_COMPANION)
     }
 
+    /**
+     * JVM-specific class flags in addition to common class flags declared in [Flag.Class].
+     */
+    object Class {
+        /**
+         * Applied to an interface compiled with jvm-default=all or all-compatibility.
+         */
+        @JvmField
+        val ARE_INTERFACE_METHOD_BODIES_INSIDE = booleanFlag(JF.ARE_INTERFACE_METHOD_BODIES_INSIDE)
+
+        /**
+         * Applied to an interface compiled with jvm-default=all-compatibility.
+         */
+        @JvmField
+        val IS_ALL_COMPATIBILITY_MODE = booleanFlag(JF.IS_ALL_COMPATIBILITY_MODE)
+    }
+
     private fun booleanFlag(f: F.BooleanFlagField): Flag =
         Flag(f.offset, f.bitWidth, 1)
 }
