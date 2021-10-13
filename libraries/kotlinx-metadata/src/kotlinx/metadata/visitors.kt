@@ -144,6 +144,10 @@ abstract class KmClassVisitor @JvmOverloads constructor(delegate: KmClassVisitor
     /**
      * Visits the type of the underlying property, if this class is `inline`.
      *
+     * The Kotlin compiler will not serialize this field if the underlying
+     * property of the inline class is public, since it is equal to the
+     * return type of the underlying property.
+     *
      * @param flags type flags, consisting of [Flag.Type] flags
      */
     open fun visitInlineClassUnderlyingType(flags: Flags): KmTypeVisitor? =

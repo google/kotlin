@@ -96,8 +96,8 @@ fun ProtoBuf.Class.accept(
     if (hasInlineClassUnderlyingPropertyName()) {
         v.visitInlineClassUnderlyingPropertyName(c[inlineClassUnderlyingPropertyName])
     }
-    loadInlineClassUnderlyingType(c)?.let { underlyingType ->
-        v.visitInlineClassUnderlyingType(underlyingType.flags)?.let { underlyingType.accept(it, c) }
+    inlineClassUnderlyingType(c.types)?.let { underlyingType ->
+        v.visitInlineClassUnderlyingType(underlyingType.typeFlags)?.let { underlyingType.accept(it, c) }
     }
 
     for (versionRequirement in versionRequirementList) {
@@ -109,18 +109,6 @@ fun ProtoBuf.Class.accept(
     }
 
     v.visitEnd()
-}
-
-private fun ProtoBuf.Class.loadInlineClassUnderlyingType(c: ReadContext): ProtoBuf.Type? {
-    val type = inlineClassUnderlyingType(c.types)
-    if (type != null) return type
-
-    if (!hasInlineClassUnderlyingPropertyName()) return null
-
-    // Kotlin compiler doesn't write underlying type to metadata in case it can be loaded from the underlying property.
-    return propertyList
-        .singleOrNull { it.receiverType(c.types) == null && c[it.name] == c[inlineClassUnderlyingPropertyName] }
-        ?.returnType(c.types)
 }
 
 fun ProtoBuf.Package.accept(

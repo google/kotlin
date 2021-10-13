@@ -9,12 +9,11 @@ import kotlinx.metadata.*
 import kotlinx.metadata.jvm.*
 import org.jetbrains.org.objectweb.asm.ClassWriter
 import org.jetbrains.org.objectweb.asm.Opcodes
-import org.junit.Assert.*
 import org.junit.Test
 import java.net.URLClassLoader
 import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.full.primaryConstructor
-import kotlin.test.assertFailsWith
+import kotlin.test.*
 
 class MetadataSmokeTest {
     private fun Class<*>.readMetadata(): KotlinClassHeader {
@@ -236,4 +235,66 @@ class MetadataSmokeTest {
             .toKmClass()
         assertEquals(kmClassCopy.jvmFlags, jvmClassFlags)
     }
+
+    fun publicInlineClassRepresentations() {
+        val classMetadata =
+            (KotlinClassMetadata.read(InlineClassWithPublicProperty::class.java.readMetadata()) as KotlinClassMetadata.Class).toKmClass()
+
+        assertEquals(classMetadata.inlineClassUnderlyingPropertyName, "publicValue")
+        assertNull(classMetadata.inlineClassUnderlyingType)
+
+        // For inline classes with public underlying property we should be able to look up
+        // the underlying type based on the return type of the underlying property.
+        val underlyingType = classMetadata.properties.singleOrNull {
+            it.receiverParameterType == null && it.name == classMetadata.inlineClassUnderlyingPropertyName
+        }?.returnType
+        assertNotNull(underlyingType)
+        assertTrue(Flag.Type.IS_NULLABLE(underlyingType.flags))
+        assertIs<KmClassifier.Class>(underlyingType.classifier)
+        assertEquals((underlyingType.classifier as KmClassifier.Class).name, "kotlin/Int")
+    }
+
+    @Test
+    fun privateInlineClassRepresentation() {
+        val classMetadata =
+            (KotlinClassMetadata.read(InlineClassWithPrivateProperty::class.java.readMetadata()) as KotlinClassMetadata.Class).toKmClass()
+
+        assertEquals(classMetadata.inlineClassUnderlyingPropertyName, "privateValue")
+
+        val underlyingType = classMetadata.inlineClassUnderlyingType
+        assertNotNull(underlyingType)
+        assertTrue(Flag.Type.IS_NULLABLE(underlyingType.flags))
+        assertTrue(Flag.Type.IS_SUSPEND(underlyingType.flags))
+        assertIs<KmClassifier.Class>(underlyingType.classifier)
+
+        // The type "suspend () -> Unit" is compiled to "Function1<Continuation<Unit>, Any?>"
+        // and this is visible in the metadata.
+        assertEquals((underlyingType.classifier as KmClassifier.Class).name, "kotlin/Function1")
+        assertEquals(underlyingType.arguments.size, 2)
+
+        val continuationType = underlyingType.arguments[0].type
+        assertNotNull(continuationType)
+        assertIs<KmClassifier.Class>(continuationType.classifier)
+        assertEquals((continuationType.classifier as KmClassifier.Class).name, "kotlin/coroutines/Continuation")
+        assertEquals(continuationType.arguments.size, 1)
+
+        val continuationReturnType = continuationType.arguments[0].type
+        assertNotNull(continuationReturnType)
+        assertIs<KmClassifier.Class>(continuationReturnType.classifier)
+        assertEquals((continuationReturnType.classifier as KmClassifier.Class).name, "kotlin/Unit")
+
+        val returnType = underlyingType.arguments[1].type
+        assertNotNull(returnType)
+        assertIs<KmClassifier.Class>(returnType.classifier)
+        assertEquals((returnType.classifier as KmClassifier.Class).name, "kotlin/Any")
+        assertTrue(Flag.Type.IS_NULLABLE(returnType.flags))
+    }
 }
+
+@Suppress("unused")
+@JvmInline
+private value class InlineClassWithPublicProperty(val publicValue: Int?)
+
+@Suppress("unused")
+@JvmInline
+private value class InlineClassWithPrivateProperty(private val privateValue: (suspend () -> Unit)?)
