@@ -472,6 +472,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNNECESSARY_LATEI
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNNECESSARY_NOT_NULL_ASSERTION
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNNECESSARY_SAFE_CALL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNREACHABLE_CODE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNRESOLVED_IMPORT
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNRESOLVED_LABEL
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNRESOLVED_REFERENCE
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.UNRESOLVED_REFERENCE_WRONG_RECEIVER
@@ -572,6 +573,7 @@ class FirDefaultErrorMessages {
 //            map.put(UNKNOWN_CALLABLE_KIND, ...) // &
 //            map.put(MISSING_STDLIB_CLASS, ...) // &
             map.put(NO_THIS, "'this' is not defined in this context")
+            map.put(UNRESOLVED_IMPORT, "Unresolved reference: {0}", NULLABLE_STRING)
 
             // Super
             map.put(SUPER_IS_NOT_AN_EXPRESSION, "Super cannot be a callee")

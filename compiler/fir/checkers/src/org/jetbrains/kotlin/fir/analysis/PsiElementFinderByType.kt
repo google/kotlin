@@ -12,7 +12,8 @@ import org.jetbrains.kotlin.psi.psiUtil.allChildren
 class PsiElementFinderByType(
     private val types: Collection<IElementType>,
     private var index: Int,
-    private val depth: Int
+    private val depth: Int,
+    private val reverse: Boolean,
 ) {
     fun find(root: PsiElement): PsiElement? {
         return visitElement(root, 0)

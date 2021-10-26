@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.fir.resolve.diagnostics
 
 import kotlinx.collections.immutable.ImmutableList
-import org.jetbrains.kotlin.resolve.deprecation.DeprecationInfo
 import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirVariable
@@ -21,6 +20,7 @@ import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.calls.tower.CandidateApplicability
+import org.jetbrains.kotlin.resolve.deprecation.DeprecationInfo
 
 sealed interface ConeUnresolvedError : ConeDiagnostic {
     val qualifier: String?
@@ -194,6 +194,11 @@ class ConeCyclicTypeBound(val symbol: FirTypeParameterSymbol, val bounds: Immuta
 
 class ConeImportFromSingleton(val name: Name) : ConeDiagnostic {
     override val reason: String get() = "Import from singleton $name is not allowed"
+}
+
+class ConeUnresolvedParentInImport(val parentClassId: ClassId) : ConeDiagnostic {
+    override val reason: String
+        get() = "unresolved import"
 }
 
 open class ConeUnsupported(override val reason: String, val source: FirSourceElement? = null) : ConeDiagnostic

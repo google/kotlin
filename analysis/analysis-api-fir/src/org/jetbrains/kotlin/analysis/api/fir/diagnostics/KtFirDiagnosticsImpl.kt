@@ -299,6 +299,12 @@ internal class UnresolvedReferenceWrongReceiverImpl(
     override val token: ValidityToken,
 ) : KtFirDiagnostic.UnresolvedReferenceWrongReceiver(), KtAbstractFirDiagnostic<PsiElement>
 
+internal class UnresolvedImportImpl(
+    override val reference: String,
+    override val firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.UnresolvedImport(), KtAbstractFirDiagnostic<PsiElement>
+
 internal class CreatingAnInstanceOfAbstractClassImpl(
     override val firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,

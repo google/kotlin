@@ -10,33 +10,33 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.fir.*
 
-fun FirSourceElement.getChild(type: IElementType, index: Int = 0, depth: Int = -1): FirSourceElement? {
-    return getChild(setOf(type), index, depth)
+fun FirSourceElement.getChild(type: IElementType, index: Int = 0, depth: Int = -1, reverse: Boolean = false): FirSourceElement? {
+    return getChild(setOf(type), index, depth, reverse)
 }
 
-fun FirSourceElement.getChild(types: TokenSet, index: Int = 0, depth: Int = -1): FirSourceElement? {
-    return getChild(types.types.toSet(), index, depth)
+fun FirSourceElement.getChild(types: TokenSet, index: Int = 0, depth: Int = -1, reverse: Boolean = false): FirSourceElement? {
+    return getChild(types.types.toSet(), index, depth, reverse)
 }
 
-fun FirSourceElement.getChild(types: Set<IElementType>, index: Int = 0, depth: Int = -1): FirSourceElement? {
+fun FirSourceElement.getChild(types: Set<IElementType>, index: Int = 0, depth: Int = -1, reverse: Boolean = false): FirSourceElement? {
     return when (this) {
         is FirPsiSourceElement -> {
-            getChild(types, index, depth)
+            getChild(types, index, depth, reverse)
         }
         is FirLightSourceElement -> {
-            getChild(types, index, depth)
+            getChild(types, index, depth, reverse)
         }
         else -> null
     }
 }
 
-private fun FirPsiSourceElement.getChild(types: Set<IElementType>, index: Int, depth: Int): FirSourceElement? {
-    val visitor = PsiElementFinderByType(types, index, depth)
+private fun FirPsiSourceElement.getChild(types: Set<IElementType>, index: Int, depth: Int, reverse: Boolean): FirSourceElement? {
+    val visitor = PsiElementFinderByType(types, index, depth, reverse)
     return visitor.find(psi)?.toFirPsiSourceElement()
 }
 
-private fun FirLightSourceElement.getChild(types: Set<IElementType>, index: Int, depth: Int): FirSourceElement? {
-    val visitor = LighterTreeElementFinderByType(treeStructure, types, index, depth)
+private fun FirLightSourceElement.getChild(types: Set<IElementType>, index: Int, depth: Int, reverse: Boolean): FirSourceElement? {
+    val visitor = LighterTreeElementFinderByType(treeStructure, types, index, depth, reverse)
     val childNode = visitor.find(lighterASTNode) ?: return null
     return buildChildSourceElement(childNode)
 }
