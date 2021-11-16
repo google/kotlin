@@ -93,7 +93,7 @@ fun getFunctionTypeForAbstractMethod(
     }
 
     return createFunctionType(
-        function.builtIns, EMPTY, receiverType, parameterTypes,
+        function.builtIns, function.annotations, receiverType, parameterTypes,
         parameterNames, returnType, function.isSuspend
     )
 }
