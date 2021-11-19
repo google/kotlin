@@ -136,7 +136,6 @@ open class FragmentDeclarationGenerator(
                     parameterInfo.descriptor
                 )
 
-
     private fun KotlinType.toIrType() = context.typeTranslator.translateType(this)
 
     private inline fun <T : IrDeclaration> T.buildWithScope(builder: (T) -> Unit): T =

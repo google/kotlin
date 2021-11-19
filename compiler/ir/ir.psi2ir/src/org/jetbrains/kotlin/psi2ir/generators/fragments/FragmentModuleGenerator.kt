@@ -23,7 +23,7 @@ class FragmentModuleGenerator(
     override fun generateModuleFragment(
         ktFiles: Collection<KtFile>,
     ): IrModuleFragment {
-        assert(ktFiles.firstOrNull { it is KtBlockCodeFragment} != null) {
+        assert(ktFiles.singleOrNull { it is KtBlockCodeFragment} != null) {
             "Amongst all files passed to the FragmentModuleGenerator should be exactly one KtBlockCodeFragment"
         }
         return IrModuleFragmentImpl(context.moduleDescriptor, context.irBuiltIns).also { irModule ->
