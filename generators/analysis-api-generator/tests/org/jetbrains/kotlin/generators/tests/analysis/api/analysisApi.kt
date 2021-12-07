@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.descriptors.test.annotations.AbstractAn
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.compileTimeConstantProvider.AbstractKtFe10CompileTimeConstantEvaluatorTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.expressionInfoProvider.AbstractKtFe10ReturnTargetSymbolTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.expressionInfoProvider.AbstractKtFe10WhenMissingCasesTest
+import org.jetbrains.kotlin.analysis.api.descriptors.test.components.expressionTypeProvider.AbstractKtFe10DeclarationReturnTypeTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.expressionTypeProvider.AbstractKtFe10ExpectedExpressionTypeTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.expressionTypeProvider.AbstractKtFe10HLExpressionTypeTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.smartCastProvider.AbstractKtFe10HLSmartCastInfoTest
@@ -17,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.descriptors.test.components.symbolDecla
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.symbolDeclarationRenderer.AbstractKtFe10RendererTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.typeCreator.AbstractKtFe10TypeParameterTypeTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.typeProvider.AbstractKtFe10HasCommonSubtypeTest
-import org.jetbrains.kotlin.analysis.api.descriptors.test.components.expressionTypeProvider.AbstractKtFe10DeclarationReturnTypeTest
+import org.jetbrains.kotlin.analysis.api.descriptors.test.components.typeProvider.AbstractKtFe10IsDenotableTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.symbols.AbstractKtFe10SymbolByFqNameTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.symbols.AbstractKtFe10SymbolByPsiTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.symbols.AbstractKtFe10SymbolByReferenceTest
@@ -42,6 +43,7 @@ import org.jetbrains.kotlin.analysis.api.fir.components.typeCreator.AbstractFirT
 import org.jetbrains.kotlin.analysis.api.fir.components.typeInfoProvider.AbstractFirFunctionClassKindTest
 import org.jetbrains.kotlin.analysis.api.fir.components.typeProvider.AbstractFirGetSuperTypesTest
 import org.jetbrains.kotlin.analysis.api.fir.components.typeProvider.AbstractFirHasCommonSubtypeTest
+import org.jetbrains.kotlin.analysis.api.fir.components.typeProvider.AbstractFirIsDenotableTest
 import org.jetbrains.kotlin.analysis.api.fir.scopes.AbstractFirDelegateMemberScopeTest
 import org.jetbrains.kotlin.analysis.api.fir.scopes.AbstractFirFileScopeTest
 import org.jetbrains.kotlin.analysis.api.fir.scopes.AbstractFirMemberScopeByFqNameTest
@@ -245,6 +247,9 @@ private fun TestGroupSuite.generateAnalysisApiComponentsTests() {
         }
         test(fir = AbstractFirGetSuperTypesTest::class, fe10 = null) {
             model("superTypes")
+        }
+        test(fir = AbstractFirIsDenotableTest::class, fe10 = AbstractKtFe10IsDenotableTest::class) {
+            model("isDenotable", excludedPattern = ".*\\.descriptors\\.kt$")
         }
     }
 
