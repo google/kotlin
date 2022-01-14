@@ -7,10 +7,10 @@
 package org.jetbrains.kotlin.gradle.internal
 
 import com.android.build.gradle.BaseExtension
-import com.android.build.gradle.api.AndroidSourceSet
 import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.api.TestVariant
 import com.android.build.gradle.internal.variant.TestVariantData
+import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.file.FileCollection
@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.model.builder.KotlinAndroidExtensionModelBuilder
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmAndroidCompilation
+import org.jetbrains.kotlin.gradle.tasks.CompilerPluginOptions
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.w3c.dom.Document
 import java.io.File
@@ -37,7 +38,37 @@ class AndroidExtensionsSubpluginIndicator @Inject internal constructor(private v
         project.extensions.create("androidExtensions", AndroidExtensionsExtension::class.java)
         addAndroidExtensionsRuntime(project)
         registry.register(KotlinAndroidExtensionModelBuilder())
-        project.plugins.apply(AndroidSubplugin::class.java)
+        val subplugin = project.plugins.apply(AndroidSubplugin::class.java)
+
+        val compilerPluginArtifact = subplugin.getPluginArtifact()
+        project.configurations.getByName(PLUGIN_CLASSPATH_CONFIGURATION_NAME).dependencies.add(
+            project.dependencies.create(
+                "${compilerPluginArtifact.groupId}:${compilerPluginArtifact.artifactId}:${project.getKotlinPluginVersion()}"
+            )
+        )
+
+        val sourceSetHandler: AgpSourceSets = Class.forName("org.jetbrains.kotlin.gradle.internal.Agp72SourceSetHandler").getConstructor(Project::class.java).newInstance(project) as AgpSourceSets
+
+        sourceSetHandler.onEachVariant { variantName ->
+            if (project.androidExtensions().isExperimental) {
+                throw GradleException("Using 'kotlin-android-extensions' with AGP that supports built-in Kotlin compilation is not supported.")
+            }
+            val (options, taskConfiguration) = subplugin.applyToCompilationImpl(project, sourceSetHandler)
+
+            project.tasks.withType(KotlinCompile::class.java).forEach { kotlinCompileTask ->
+                if (kotlinCompileTask.extensions.getByName("AGP_VARIANT_NAME") as String != variantName) return@forEach
+
+                taskConfiguration(kotlinCompileTask)
+            }
+
+            return@onEachVariant options.map { opts ->
+                CompilerPluginOptions().also {
+                    opts.forEach { opt ->
+                        it.addPluginArgument(subplugin.getCompilerPluginId(), opt)
+                    }
+                }
+            }
+        }
 
         project.logger.warn(
             "Warning: The 'kotlin-android-extensions' Gradle plugin is deprecated. " +
@@ -71,6 +102,8 @@ class AndroidExtensionsSubpluginIndicator @Inject internal constructor(private v
     }
 }
 
+private fun Project.androidExtensions() = extensions.getByType(AndroidExtensionsExtension::class.java)
+
 class AndroidSubplugin :
     KotlinCompilerPluginSupportPlugin,
     @Suppress("DEPRECATION_ERROR") // implementing to fix KT-39809
@@ -95,26 +128,30 @@ class AndroidSubplugin :
         kotlinCompilation: KotlinCompilation<*>
     ): Provider<List<SubpluginOption>> {
         kotlinCompilation as KotlinJvmAndroidCompilation
-        val project = kotlinCompilation.target.project
+        val sourceSetHandler: AgpSourceSets = Class.forName("org.jetbrains.kotlin.gradle.internal.Agp72SourceSetHandler").getConstructor(Project::class.java).newInstance(
+            kotlinCompilation.target.project
+        ) as AgpSourceSets
 
-        val androidExtension = project.extensions.getByName("android") as BaseExtension
-        val androidExtensionsExtension = project.extensions.getByType(AndroidExtensionsExtension::class.java)
-
-        if (androidExtensionsExtension.isExperimental) {
-            return applyExperimental(
-                kotlinCompilation.compileKotlinTaskProvider, androidExtension, androidExtensionsExtension,
-                project, kotlinCompilation.androidVariant
-            )
+        val androidExtensions = kotlinCompilation.project.androidExtensions()
+        val (options, taskConfiguration) = if (androidExtensions.isExperimental) {
+            applyExperimental(sourceSetHandler, androidExtensions, kotlinCompilation.project, kotlinCompilation.androidVariant)
+        } else {
+            applyToCompilationImpl(kotlinCompilation.project, sourceSetHandler)
         }
 
-        val sourceSets = androidExtension.sourceSets
+        kotlinCompilation.compileKotlinTaskProvider.configure(taskConfiguration)
+        return options
+    }
+
+    internal fun applyToCompilationImpl(project: Project, androidSourceSetsHandler: AgpSourceSets): Pair<Provider<List<SubpluginOption>>, KotlinCompile.() -> Unit> {
+        val androidExtension = project.extensions.getByName("android") as BaseExtension
+        val androidExtensionsExtension = project.androidExtensions()
 
         val pluginOptions = arrayListOf<SubpluginOption>()
         pluginOptions += SubpluginOption("features",
                                          AndroidExtensionsFeature.parseFeatures(androidExtensionsExtension.features).joinToString(",") { it.featureName })
 
-        val mainSourceSet = sourceSets.getByName("main")
-        val manifestFile = mainSourceSet.manifest.srcFile
+        val manifestFile = androidSourceSetsHandler.getMainManifest()
         val applicationPackage = getApplicationPackageFromManifest(manifestFile) ?: run {
             project.logger.warn(
                 "Application package name is not present in the manifest file (${manifestFile.absolutePath})"
@@ -123,32 +160,37 @@ class AndroidSubplugin :
         }
         pluginOptions += SubpluginOption("package", applicationPackage)
 
-        fun addVariant(sourceSet: AndroidSourceSet) {
+        val configurationActions = mutableListOf<KotlinCompile.() -> Unit>()
+
+        fun addVariant(name: String, resSrcDirs: Iterable<File>) {
             val optionValue = lazy {
-                sourceSet.name + ';' + sourceSet.res.srcDirs.joinToString(";") { it.absolutePath }
+                name + ';' + resSrcDirs.joinToString(";") { it.absolutePath }
             }
             pluginOptions += CompositeSubpluginOption(
                 "variant", optionValue, listOf(
-                    SubpluginOption("sourceSetName", sourceSet.name),
+                    SubpluginOption("sourceSetName", name),
                     //use the INTERNAL option kind since the resources are tracked as sources (see below)
-                    FilesSubpluginOption("resDirs", project.files(Callable { sourceSet.res.srcDirs }))
+                    FilesSubpluginOption("resDirs", project.files(Callable { resSrcDirs }))
                 )
             )
-            kotlinCompilation.compileKotlinTaskProvider.configure {
-                it.source(getLayoutDirectories(project, sourceSet.res.srcDirs))
+
+            configurationActions.add({ source(getLayoutDirectories(project, resSrcDirs)) })
+        }
+
+        addVariant("main", androidSourceSetsHandler.getResDirsForSourceSet("main")!!)
+
+        for (productFlavor in androidExtension.productFlavors) {
+            androidSourceSetsHandler.getResDirsForSourceSet(productFlavor.name)?.let {
+                addVariant(productFlavor.name, it)
             }
         }
 
-        addVariant(mainSourceSet)
-
-        val flavorSourceSets = androidExtension.productFlavors
-            .mapNotNull { androidExtension.sourceSets.findByName(it.name) }
-
-        for (sourceSet in flavorSourceSets) {
-            addVariant(sourceSet)
+        val finalConfigurationAction: KotlinCompile.() -> Unit = {
+            configurationActions.forEach {
+                it.invoke(this)
+            }
         }
-
-        return project.provider { wrapPluginOptions(pluginOptions, "configuration") }
+        return Pair(project.provider { wrapPluginOptions(pluginOptions, "configuration") }, finalConfigurationAction)
     }
 
     private fun getLayoutDirectories(project: Project, resDirectories: Iterable<File>): FileCollection {
@@ -162,12 +204,11 @@ class AndroidSubplugin :
     }
 
     private fun applyExperimental(
-        kotlinCompile: TaskProvider<out KotlinCompile>,
-        androidExtension: BaseExtension,
+        androidSourceSetsHandler: AgpSourceSets,
         androidExtensionsExtension: AndroidExtensionsExtension,
         project: Project,
         variantData: Any?
-    ): Provider<List<SubpluginOption>> {
+    ): Pair<Provider<List<SubpluginOption>>, KotlinCompile.() -> Unit> {
         val pluginOptions = arrayListOf<SubpluginOption>()
         pluginOptions += SubpluginOption(
             "features",
@@ -180,8 +221,10 @@ class AndroidSubplugin :
             androidExtensionsExtension.defaultCacheImplementation.optionName
         )
 
-        val mainSourceSet = androidExtension.sourceSets.getByName("main")
-        pluginOptions += SubpluginOption("package", getApplicationPackage(project, mainSourceSet))
+        val mainManifest = androidSourceSetsHandler.getMainManifest()
+        pluginOptions += SubpluginOption("package", getApplicationPackage(project, mainManifest))
+
+        val configurationActions = mutableListOf<KotlinCompile.() -> Unit>()
 
         fun addVariant(name: String, resDirectories: FileCollection) {
             val optionValue = lazy {
@@ -199,16 +242,15 @@ class AndroidSubplugin :
                 )
             )
 
-            kotlinCompile.configure {
-                it.inputs.files(getLayoutDirectories(project, resDirectories)).withPathSensitivity(PathSensitivity.RELATIVE)
-            }
+            configurationActions.add( {
+                inputs.files(getLayoutDirectories(project, resDirectories)).withPathSensitivity(PathSensitivity.RELATIVE)
+            })
         }
 
         fun addSourceSetAsVariant(name: String) {
-            val sourceSet = androidExtension.sourceSets.findByName(name) ?: return
-            val srcDirs = sourceSet.res.srcDirs.toList()
+            val srcDirs = androidSourceSetsHandler.getResDirsForSourceSet(name) ?: return
             if (srcDirs.isNotEmpty()) {
-                addVariant(sourceSet.name, project.files(srcDirs))
+                addVariant(name, project.files(srcDirs))
             }
         }
 
@@ -235,7 +277,12 @@ class AndroidSubplugin :
             }
         }
 
-        return project.provider { wrapPluginOptions(pluginOptions, "configuration") }
+        val finalConfigurationAction: KotlinCompile.() -> Unit = {
+            configurationActions.forEach {
+                it.invoke(this)
+            }
+        }
+        return Pair(project.provider { wrapPluginOptions(pluginOptions, "configuration") }, finalConfigurationAction)
     }
 
     private fun getVariantComponentNames(flavorData: Any?): VariantComponentNames? = when (flavorData) {
@@ -260,8 +307,7 @@ class AndroidSubplugin :
         return project.files(Callable { lazyFiles.value })
     }
 
-    private fun getApplicationPackage(project: Project, mainSourceSet: AndroidSourceSet): String {
-        val manifestFile = mainSourceSet.manifest.srcFile
+    private fun getApplicationPackage(project: Project, manifestFile: File): String {
         val applicationPackage = getApplicationPackageFromManifest(manifestFile)
 
         if (applicationPackage == null) {
@@ -303,4 +349,26 @@ class AndroidSubplugin :
         kotlinCompilation: KotlinCompilation<KotlinCommonOptions>?
     ): List<SubpluginOption> = emptyList()
     //endregion
+}
+
+class AgpPre72SourceSetHandler(private val baseExtension: BaseExtension): AgpSourceSets {
+    override fun getMainManifest(): File {
+        val sourceSets = baseExtension.sourceSets
+        val mainSourceSet = sourceSets.getByName("main")
+        return mainSourceSet.manifest.srcFile
+    }
+
+    override fun getResDirsForSourceSet(name: String): Set<File>? {
+        return baseExtension.sourceSets.findByName(name)?.res?.srcDirs
+    }
+
+    override fun onEachVariant(callable: (String) -> Provider<CompilerPluginOptions>) {
+        // do nothing, the lifecycle is controlled by the KGP plugin
+    }
+}
+
+interface AgpSourceSets {
+    fun getMainManifest(): File
+    fun getResDirsForSourceSet(name: String): Set<File>?
+    fun onEachVariant(callable: (String) -> Provider<CompilerPluginOptions>)
 }
