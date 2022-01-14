@@ -34,21 +34,6 @@ abstract class KaptWithKotlincTask @Inject constructor(
     CompilerArgumentAwareWithInput<K2JVMCompilerArguments>,
     CompileUsingKotlinDaemonWithNormalization {
 
-    class Configurator(kotlinCompileTask: KotlinCompile): KaptTask.Configurator<KaptWithKotlincTask>(kotlinCompileTask) {
-        override fun configure(task: KaptWithKotlincTask) {
-            super.configure(task)
-            task.pluginClasspath.from(kotlinCompileTask.pluginClasspath)
-            task.compileKotlinArgumentsContributor.set(
-                task.project.provider { kotlinCompileTask.compilerArgumentsContributor }
-            )
-            task.javaPackagePrefix.set(task.project.provider { kotlinCompileTask.javaPackagePrefix })
-            task.reportingSettings.set(task.project.provider { kotlinCompileTask.reportingSettings() })
-        }
-    }
-
-    @get:Internal
-    internal val pluginOptions = CompilerPluginOptions()
-
     @get:Classpath
     abstract val pluginClasspath: ConfigurableFileCollection
 
@@ -93,8 +78,11 @@ abstract class KaptWithKotlincTask @Inject constructor(
     private var classpathChanges: List<String> = emptyList()
     private var processIncrementally = false
 
-    private val javaPackagePrefix = objectFactory.property(String::class.java)
-    private val reportingSettings = objectFactory.property(ReportingSettings::class.java)
+    @get:Internal
+    internal val javaPackagePrefix = objectFactory.property(String::class.java)
+
+    @get:Internal
+    internal val reportingSettings = objectFactory.property(ReportingSettings::class.java)
 
     @TaskAction
     fun compile(inputChanges: InputChanges) {
