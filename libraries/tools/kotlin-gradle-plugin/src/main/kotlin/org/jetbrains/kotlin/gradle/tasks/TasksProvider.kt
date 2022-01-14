@@ -21,12 +21,12 @@ import org.gradle.api.Task
 import org.gradle.api.UnknownTaskException
 import org.gradle.api.tasks.TaskCollection
 import org.gradle.api.tasks.TaskProvider
-import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
-import org.jetbrains.kotlin.gradle.plugin.mapKotlinTaskProperties
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinCompilationData
-import org.jetbrains.kotlin.gradle.plugin.runOnceAfterEvaluated
-import org.jetbrains.kotlin.gradle.plugin.sources.applyLanguageSettingsToKotlinOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrLink
+import org.jetbrains.kotlin.gradle.tasks.configuration.Kotlin2JsCompileConfig
+import org.jetbrains.kotlin.gradle.tasks.configuration.KotlinCompileCommonConfig
+import org.jetbrains.kotlin.gradle.tasks.configuration.KotlinCompileConfig
+import org.jetbrains.kotlin.gradle.tasks.configuration.KotlinJsIrLinkConfig
 
 /**
  * Registers the task with [name] and [type] and initialization script [body]
@@ -91,113 +91,46 @@ internal inline fun <reified T : Task> Project.locateOrRegisterTask(
 internal open class KotlinTasksProvider {
     open fun registerKotlinJVMTask(
         project: Project,
-        name: String,
-        compilation: KotlinCompilationData<*>,
-        configureAction: (KotlinCompile) -> (Unit)
+        kotlinOptions: KotlinCommonOptions,
+        configuration: KotlinCompileConfig
     ): TaskProvider<out KotlinCompile> {
-        val properties = PropertiesProvider(project)
-        val kotlinCompile = project.registerTask(
-            name,
-            KotlinCompile::class.java,
-            constructorArgs = listOf(compilation.kotlinOptions)
-        )
-
-        val configurator = KotlinCompile.Configurator<KotlinCompile>(compilation, properties)
-        configurator.runAtConfigurationTime(kotlinCompile, project)
-
-        kotlinCompile.configure {
-            configureAction(it)
-            configurator.configure(it)
+        return project.registerTask(configuration.taskName, KotlinCompile::class.java, constructorArgs = listOf(kotlinOptions)).also {
+            configuration.configureTask(it)
         }
-        configure(kotlinCompile, project, properties, compilation)
-
-        return kotlinCompile
     }
 
     fun registerKotlinJSTask(
-        project: Project,
-        name: String,
-        compilation: KotlinCompilationData<*>,
-        configureAction: (Kotlin2JsCompile) -> Unit
+        project: Project, kotlinOptions: KotlinCommonOptions, configuration: Kotlin2JsCompileConfig
     ): TaskProvider<out Kotlin2JsCompile> {
-        val properties = PropertiesProvider(project)
-        val result = project.registerTask(
-            name,
+        return project.registerTask(
+            configuration.taskName,
             Kotlin2JsCompile::class.java,
-            constructorArgs = listOf(compilation.kotlinOptions)
-        ) {
-            configureAction(it)
-            Kotlin2JsCompile.Configurator<Kotlin2JsCompile>(compilation).configure(it)
+            constructorArgs = listOf(kotlinOptions)
+        ).also {
+            configuration.configureTask(it)
         }
-        configure(result, project, properties, compilation)
-        return result
     }
 
     fun registerKotlinJsIrTask(
-        project: Project,
-        name: String,
-        compilation: KotlinCompilationData<*>,
-        configureAction: (KotlinJsIrLink) -> Unit
+        project: Project, configuration: KotlinJsIrLinkConfig
     ): TaskProvider<out KotlinJsIrLink> {
-        val properties = PropertiesProvider(project)
-        val result = project.registerTask(
-            name,
+        return project.registerTask(
+            configuration.taskName,
             KotlinJsIrLink::class.java
-        ) {
-            it.compilation = compilation
-            configureAction(it)
-            KotlinJsIrLink.Configurator(compilation).configure(it)
+        ).also {
+            configuration.configureTask(it)
         }
-        configure(result, project, properties, compilation)
-        return result
     }
 
     fun registerKotlinCommonTask(
-        project: Project,
-        name: String,
-        compilation: KotlinCompilationData<*>,
-        configureAction: (KotlinCompileCommon) -> (Unit)
+        project: Project, kotlinOptions: KotlinCommonOptions, configuration: KotlinCompileCommonConfig
     ): TaskProvider<out KotlinCompileCommon> {
-        val properties = PropertiesProvider(project)
-        val result = project.registerTask(
-            name,
+        return project.registerTask(
+            configuration.taskName,
             KotlinCompileCommon::class.java,
-            constructorArgs = listOf(compilation.kotlinOptions)
-        ) {
-            configureAction(it)
-            KotlinCompileCommon.Configurator(compilation).configure(it)
-        }
-        configure(result, project, properties, compilation)
-        return result
-    }
-
-    open fun configure(
-        kotlinTaskHolder: TaskProvider<out AbstractKotlinCompile<*>>,
-        project: Project,
-        propertiesProvider: PropertiesProvider,
-        compilation: KotlinCompilationData<*>
-    ) {
-        project.runOnceAfterEvaluated("apply properties and language settings to ${kotlinTaskHolder.name}", kotlinTaskHolder) {
-            propertiesProvider.mapKotlinTaskProperties(kotlinTaskHolder.get())
-
-            applyLanguageSettingsToKotlinOptions(
-                compilation.languageSettings,
-                (kotlinTaskHolder.get() as org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>).kotlinOptions
-            )
-        }
-    }
-}
-
-internal class AndroidTasksProvider : KotlinTasksProvider() {
-    override fun configure(
-        kotlinTaskHolder: TaskProvider<out AbstractKotlinCompile<*>>,
-        project: Project,
-        propertiesProvider: PropertiesProvider,
-        compilation: KotlinCompilationData<*>
-    ) {
-        super.configure(kotlinTaskHolder, project, propertiesProvider, compilation)
-        kotlinTaskHolder.configure {
-            it.useModuleDetection.set(true)
+            constructorArgs = listOf(kotlinOptions)
+        ).also {
+            configuration.configureTask(it)
         }
     }
 }

@@ -1,5 +1,6 @@
 package org.jetbrains.kotlin.gradle.tasks
 
+import org.gradle.api.file.ConfigurableFileTree
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
 import org.gradle.api.file.SourceDirectorySet
@@ -80,6 +81,7 @@ internal class FilteringSourceRootsContainer(
                 is SourceDirectorySet -> resultItems.add(item.sourceDirectories)
                 is Callable<*> -> getRootsFrom(item.call())
                 is Provider<*> -> if (item.isPresent) getRootsFrom(item.get())
+                is ConfigurableFileTree -> resultItems.add(objectFactory.fileCollection().from({ item.dir }).builtBy(item))
                 is FileCollection -> resultItems.add(item)
                 is Iterable<*> -> item.forEach { getRootsFrom(it) }
                 is Array<*> -> item.forEach { getRootsFrom(it) }

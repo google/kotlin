@@ -8,12 +8,9 @@ package org.jetbrains.kotlin.gradle.mpp
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.internal.project.ProjectInternal
+import org.gradle.api.internal.file.collections.DefaultConfigurableFileCollection
 import org.gradle.api.plugins.ExtraPropertiesExtension
 import org.gradle.api.provider.Provider
-import org.gradle.testfixtures.ProjectBuilder
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
-import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.tasks.*
 import kotlin.test.*
@@ -106,7 +103,7 @@ internal class CompilationSpecificPluginPath {
         // And each compilation task should have its own plugin classpath
         val compileDesktop = project.tasks.getByName("compileKotlinDesktop") as KotlinCompile
         val expectedConfig = project.configurations.getByName(pluginClassPathConfiguration("desktop", "main"))
-        assertEquals(expectedConfig, compileDesktop.pluginClasspath.from.single())
+        assertEquals(expectedConfig, compileDesktop.pluginClasspathConfiguration())
     }
 
     @Test
@@ -254,6 +251,9 @@ internal class CompilationSpecificPluginPath {
     private fun pluginClassPathConfiguration(target: String, compilation: String) =
         "kotlinCompilerPluginClasspath${target.capitalize()}${compilation.capitalize()}"
 
+    private fun AbstractKotlinCompile<*>.pluginClasspathConfiguration(): Configuration =
+        (pluginClasspath.from.single() as DefaultConfigurableFileCollection).from.single() as Configuration
+
     private fun Project.subplugins(target: String, compilation: String = "main") = this
         .configurations
         .getByName(pluginClassPathConfiguration(target, compilation))
@@ -267,7 +267,7 @@ internal class CompilationSpecificPluginPath {
         .let {
             when (it) {
                 is AbstractKotlinNativeCompile<*, *> -> it.compilerPluginClasspath
-                is AbstractKotlinCompile<*> -> it.pluginClasspath.from.single()
+                is AbstractKotlinCompile<*> -> it.pluginClasspathConfiguration()
                 else -> error("Unexpected task type with name $taskName. Is it kotlin compile task?")
             }
         }
