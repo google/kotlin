@@ -45,12 +45,17 @@ open class KaptConfig<TASK : KaptTask>(
     protected val project: Project,
     protected val ext: KaptExtension,
     val taskName: String,
+    /**
+     * Task outputs are exposed with external API directly, and in that scenario setting them from the config object introduces
+     * cyclic dependency. When Config objects are created internally, this is not the case.
+     */
+    protected val configureTaskOutputs: Boolean
 ) {
     protected val objectFactory: ObjectFactory = project.objects
     protected val providerFactory: ProviderFactory = project.providers
 
     internal constructor(taskName: String, kotlinCompileTask: KotlinCompile, ext: KaptExtension) : this(
-        kotlinCompileTask.project, ext, taskName
+        kotlinCompileTask.project, ext, taskName, true
     ) {
         classpath.from(kotlinCompileTask.classpath)
         compiledSources.from(kotlinCompileTask.destinationDirectory, Callable { kotlinCompileTask.javaOutputDir.takeIf { it.isPresent } })
@@ -61,6 +66,29 @@ open class KaptConfig<TASK : KaptTask>(
             .disallowChanges()
         verbose.set(KaptTask.queryKaptVerboseProperty(project))
         compilerClasspath.from(providerFactory.provider { kotlinCompileTask.defaultCompilerClasspath })
+    }
+
+    internal constructor(project: Project, configuration: KaptOptionsImpl, ext: KaptExtension) : this(project, ext, configuration.taskName, false) {
+        this.kaptClasspath.from(configuration.kaptClasspath)
+        this.kaptExternalClasspath.from(configuration.kaptExternalClasspath)
+        this.kaptClasspathConfigurationNames.set(configuration.kaptClasspathConfigurationNames)
+        this.defaultJavaSourceCompatibility.set(configuration.defaultJavaSourceCompatibility)
+
+        this.annotationProcessorOptionProviders.clear()
+        this.annotationProcessorOptionProviders.addAll(configuration.annotationProcessorOptionProviders)
+
+        this.compiledSources.from(configuration.compiledSources)
+        this.classpath.from(configuration.classpath)
+        this.source.from(configuration.source)
+        this.sourceSetName.value(configuration.sourceSetName).disallowChanges()
+        this.includeCompileClasspath.value(configuration.includeCompileClasspath).disallowChanges()
+
+        // task properties are exposed directly via API object, make sure we do not set them to avoid cyclic dependency
+        this.incAptCache.value(configuration.incAptCacheLazy).disallowChanges()
+        this.classesDir.value(configuration.classesDirLazy).disallowChanges()
+        this.stubsDir.value(configuration.stubsDirLazy).disallowChanges()
+        this.destinationDir.value(configuration.destinationDirLazy).disallowChanges()
+        this.kotlinSourcesDestinationDir.value(configuration.kotlinSourcesDestinationDirLazy).disallowChanges()
     }
 
     val classpathStructure: ConfigurableFileCollection = objectFactory.fileCollection()
@@ -203,13 +231,15 @@ open class KaptConfig<TASK : KaptTask>(
             task.verbose.set(verbose)
 
             task.isIncremental = incremental.get()
-            if (task.isIncremental) {
+            if (task.isIncremental && configureTaskOutputs) {
                 task.incAptCache.set(incAptCache)
             }
-            task.classesDir.set(classesDir)
-            task.kotlinSourcesDestinationDir.set(kotlinSourcesDestinationDir)
-            task.stubsDir.set(stubsDir)
-            task.destinationDir.set(destinationDir)
+            if (configureTaskOutputs) {
+                task.classesDir.set(classesDir)
+                task.kotlinSourcesDestinationDir.set(kotlinSourcesDestinationDir)
+                task.stubsDir.set(stubsDir)
+                task.destinationDir.set(destinationDir)
+            }
 
             task.annotationProcessorOptionProviders.addAll(annotationProcessorOptionProviders)
             task.useBuildCache = useBuildCache.get()
@@ -258,27 +288,34 @@ private fun isAncestor(dir: File, file: File): Boolean {
     }
 }
 
-class KaptWithoutKotlincConfig(taskName: String, kotlinCompileTask: KotlinCompile, ext: KaptExtension) :
-    KaptConfig<KaptWithoutKotlincTask>(taskName, kotlinCompileTask, ext) {
+class KaptWithoutKotlincConfig : KaptConfig<KaptWithoutKotlincTask> {
 
-    val addJdkClassesToClasspath: Property<Boolean> = objectFactory.property()
-    val kaptJars: ConfigurableFileCollection = objectFactory.fileCollection()
-
-    val mapDiagnosticLocations: Property<Boolean> =
-        objectFactory.property(providerFactory.provider { ext.mapDiagnosticLocations })
-
-    val annotationProcessorFqNames: ListProperty<String> = objectFactory.listProperty(String::class.java)
-        .value(providerFactory.provider { ext.processors.split(',').filter { it.isNotEmpty() } })
-
-    val disableClassloaderCacheForProcessors: SetProperty<String> =
-        objectFactory.setProperty(String::class.java).value(project.disableClassloaderCacheForProcessors())
-
-    val classLoadersCacheSize: Property<Int> = objectFactory.property(project.classLoadersCacheSize())
-
-    init {
+    constructor(taskName: String, kotlinCompileTask: KotlinCompile, ext: KaptExtension) : super(taskName, kotlinCompileTask, ext) {
         initKaptWorkersConfiguration(project.topLevelExtension)
+
         addJdkClassesToClasspath.set(project.providers.provider { project.plugins.none { it is KotlinAndroidPluginWrapper } })
         kaptJars.from(project.configurations.getByName(Kapt3GradleSubplugin.KAPT_WORKER_DEPENDENCIES_CONFIGURATION_NAME))
+    }
+
+
+    internal constructor(project: Project, configuration: KaptOptionsImpl, ext: KaptExtension, topLevelExtension: KotlinTopLevelExtension) : super(
+        project,
+        configuration,
+        ext
+    ) {
+        addJdkClassesToClasspath.set(configuration.addJdkClassesToClasspath)
+        kaptJars.from(configuration.kaptJars)
+
+        val dslApOptions = project.provider {
+            ext.getAdditionalArguments(project, null, null).toList()
+                .map { SubpluginOption(it.first, it.second) } +
+                    FilesSubpluginOption(
+                        Kapt3GradleSubplugin.KAPT_KOTLIN_GENERATED,
+                        project.files(configuration.kotlinSourcesDestinationDir)
+                    )
+        }
+
+        addSubpluginOptions(KAPT_SUBPLUGIN_ID, dslApOptions)
     }
 
     private fun initKaptWorkersConfiguration(kotlinExt: KotlinTopLevelExtension) {
@@ -294,6 +331,20 @@ class KaptWithoutKotlincConfig(taskName: String, kotlinCompileTask: KotlinCompil
                 )
             }
     }
+
+    val addJdkClassesToClasspath: Property<Boolean> = objectFactory.property()
+    val kaptJars: ConfigurableFileCollection = objectFactory.fileCollection()
+
+    val mapDiagnosticLocations: Property<Boolean> =
+        objectFactory.property(providerFactory.provider { ext.mapDiagnosticLocations })
+
+    val annotationProcessorFqNames: ListProperty<String> = objectFactory.listProperty(String::class.java)
+        .value(providerFactory.provider { ext.processors.split(',').filter { it.isNotEmpty() } })
+
+    val disableClassloaderCacheForProcessors: SetProperty<String> =
+        objectFactory.setProperty(String::class.java).value(project.disableClassloaderCacheForProcessors())
+
+    val classLoadersCacheSize: Property<Int> = objectFactory.property(project.classLoadersCacheSize())
 
     override fun configureTask(taskProvider: TaskProvider<KaptWithoutKotlincTask>) {
         super.configureTask(taskProvider)

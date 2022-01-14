@@ -15,7 +15,9 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinTopLevelExtension
 import org.jetbrains.kotlin.gradle.internal.transforms.ClasspathEntrySnapshotTransform
+import org.jetbrains.kotlin.gradle.plugin.KotlinCompileOptionsImpl
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmAndroidCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmCompilation
@@ -29,10 +31,34 @@ import org.jetbrains.kotlin.gradle.utils.property
 internal typealias KotlinCompileConfig = BaseKotlinCompileConfig<KotlinCompile>
 
 @Suppress("MemberVisibilityCanBePrivate")
-internal open class BaseKotlinCompileConfig<TASK : KotlinCompile>(
-    compilation: KotlinCompilationData<*>,
-    taskName: String = compilation.compileKotlinTaskName
-) : AbstractKotlinCompileConfig<TASK>(compilation, taskName) {
+internal open class BaseKotlinCompileConfig<TASK : KotlinCompile> : AbstractKotlinCompileConfig<TASK> {
+
+    constructor(compilation: KotlinCompilationData<*>, taskName: String = compilation.compileKotlinTaskName) : super(compilation, taskName) {
+        val javaTaskProvider = when (compilation) {
+            is KotlinJvmCompilation -> compilation.compileJavaTaskProvider
+            is KotlinJvmAndroidCompilation -> compilation.compileJavaTaskProvider
+            is KotlinWithJavaCompilation<*> -> compilation.compileJavaTaskProvider
+            else -> null
+        }
+
+        javaTaskProvider?.let {
+            associatedJavaCompileTaskTargetCompatibility.value(javaTaskProvider.map { it.targetCompatibility })
+            associatedJavaCompileTaskSources.from(javaTaskProvider.map { it.source })
+            associatedJavaCompileTaskName.value(javaTaskProvider.name)
+        }
+        moduleName.value(providers.provider {
+            (compilation.kotlinOptions as? KotlinJvmOptions)?.moduleName ?: parentKotlinOptions.orNull?.moduleName ?: compilation.moduleName
+        })
+    }
+
+    constructor(project: Project, configuration: KotlinCompileOptionsImpl, ext: KotlinTopLevelExtension) : super(
+        project, configuration, ext
+    ) {
+        parentKotlinOptions.set(configuration.parentKotlinOptions)
+        additionalPluginOptions.set(configuration.additionalPluginOptions.map { externalOptions ->
+            externalOptions.map { CompilerPluginOptions(it) }
+        })
+    }
 
     companion object {
         private const val TRANSFORMS_REGISTERED = "_kgp_internal_kotlin_compile_transforms_registered"
@@ -104,20 +130,6 @@ internal open class BaseKotlinCompileConfig<TASK : KotlinCompile>(
     val additionalPluginOptions: ListProperty<CompilerPluginOptions> = objectFactory.listProperty(CompilerPluginOptions::class.java)
 
     init {
-        val javaTaskProvider = when (compilation) {
-            is KotlinJvmCompilation -> compilation.compileJavaTaskProvider
-            is KotlinJvmAndroidCompilation -> compilation.compileJavaTaskProvider
-            is KotlinWithJavaCompilation<*> -> compilation.compileJavaTaskProvider
-            else -> null
-        }
-        javaTaskProvider?.let {
-            associatedJavaCompileTaskTargetCompatibility.value(javaTaskProvider.map { it.targetCompatibility })
-            associatedJavaCompileTaskSources.from(javaTaskProvider.map { it.source })
-            associatedJavaCompileTaskName.value(javaTaskProvider.name)
-        }
-        moduleName.value(providers.provider {
-            (compilation.kotlinOptions as? KotlinJvmOptions)?.moduleName ?: parentKotlinOptions.orNull?.moduleName ?: compilation.moduleName
-        })
         incremental.set(propertiesProvider.incrementalJvm ?: true)
     }
 

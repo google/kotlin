@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.gradle.tasks.configuration
 
+import org.gradle.api.Project
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
@@ -12,6 +13,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.gradle.dsl.KotlinTopLevelExtension
 import org.jetbrains.kotlin.gradle.internal.CompilerArgumentsContributor
 import org.jetbrains.kotlin.gradle.internal.Kapt3GradleSubplugin.Companion.KAPT_SUBPLUGIN_ID
 import org.jetbrains.kotlin.gradle.internal.Kapt3GradleSubplugin.Companion.isIncludeCompileClasspath
@@ -19,6 +21,7 @@ import org.jetbrains.kotlin.gradle.internal.KaptGenerateStubsTask
 import org.jetbrains.kotlin.gradle.internal.KaptTask
 import org.jetbrains.kotlin.gradle.internal.buildKaptSubpluginOptions
 import org.jetbrains.kotlin.gradle.plugin.KaptExtension
+import org.jetbrains.kotlin.gradle.plugin.KaptGenerateStubsOptionsImpl
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinCompilationData
 import org.jetbrains.kotlin.gradle.tasks.CompilerPluginOptions
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -26,11 +29,41 @@ import org.jetbrains.kotlin.gradle.utils.property
 import java.io.File
 import java.util.concurrent.Callable
 
-@Suppress("MemberVisibilityCanBePrivate")
-internal class KaptGenerateStubsConfig(taskName: String, compilation: KotlinCompilationData<*>, taskProvider: TaskProvider<KotlinCompile>) :
-    BaseKotlinCompileConfig<KaptGenerateStubsTask>(compilation, taskName) {
+internal class KaptGenerateStubsConfig : BaseKotlinCompileConfig<KaptGenerateStubsTask> {
 
-    private val kaptExtension: KaptExtension = project.extensions.getByType(KaptExtension::class.java)
+    constructor(
+        taskName: String, compilation: KotlinCompilationData<*>, taskProvider: TaskProvider<KotlinCompile>
+    ) : super(compilation, taskName) {
+        this.kaptExtension = project.extensions.getByType(KaptExtension::class.java)
+
+        val kotlinCompileTask = taskProvider.get()
+
+        useModuleDetection.value(kotlinCompileTask.useModuleDetection).disallowChanges()
+        moduleName.value(kotlinCompileTask.moduleName).disallowChanges()
+        classpath.from(Callable { kotlinCompileTask.classpath })
+        compileKotlinArgumentsContributor.set(providers.provider { kotlinCompileTask.compilerArgumentsContributor })
+        allKotlinSources.from(providers.provider { kotlinCompileTask.getSourceRoots().kotlinSourceFiles })
+        allJavaSourceRoot.from(providers.provider { kotlinCompileTask.getSourceRoots().javaSourceRoots })
+    }
+
+    constructor(
+        project: Project, config: KaptGenerateStubsOptionsImpl, ext: KotlinTopLevelExtension, kaptExtension: KaptExtension
+    ) : super(
+        project, config, ext
+    ) {
+        this.kaptExtension = kaptExtension
+        allJavaSourceRoot.from(config.javaSourceRoots)
+        allKotlinSources.from(config.allKotlinSources)
+        kaptClasspath.from(config.kaptClasspath)
+        stubsDir.value(config.stubsDirLazy).disallowChanges()
+        compileKotlinArgumentsContributor.value(config.compileKotlinArgumentsContributor).disallowChanges()
+    }
+
+    init {
+        additionalPluginOptions.add(buildOptions())
+    }
+
+    private val kaptExtension: KaptExtension
 
     val allKotlinSources: ConfigurableFileCollection = objectFactory.fileCollection()
 
@@ -45,18 +78,6 @@ internal class KaptGenerateStubsConfig(taskName: String, compilation: KotlinComp
     val excludedSourceDirs: ListProperty<File> = objectFactory.listProperty(File::class.java)
 
     val kaptClasspath: ConfigurableFileCollection = objectFactory.fileCollection()
-
-    init {
-        val kotlinCompileTask = taskProvider.get()
-        useModuleDetection.value(kotlinCompileTask.useModuleDetection).disallowChanges()
-        moduleName.value(kotlinCompileTask.moduleName).disallowChanges()
-        classpath.from(Callable { kotlinCompileTask.classpath })
-        compileKotlinArgumentsContributor.set(providers.provider { kotlinCompileTask.compilerArgumentsContributor })
-        allKotlinSources.from(providers.provider { kotlinCompileTask.getSourceRoots().kotlinSourceFiles })
-        allJavaSourceRoot.from(providers.provider { kotlinCompileTask.getSourceRoots().javaSourceRoots })
-
-        additionalPluginOptions.add(buildOptions())
-    }
 
     private fun isIncludeCompileClasspath() = kaptExtension.includeCompileClasspath ?: project.isIncludeCompileClasspath()
 
@@ -85,14 +106,16 @@ internal class KaptGenerateStubsConfig(taskName: String, compilation: KotlinComp
         super.configureTask(taskProvider)
 
         taskProvider.configure { task ->
-            task.kotlinSources.from(allKotlinSources).disallowChanges()
-            task.javaSourceRoots.from(allJavaSourceRoot).disallowChanges()
+            task.kotlinSources.from(allKotlinSources)
+            task.javaSourceRoots.from(allJavaSourceRoot)
             task.verbose.set(verbose)
             task.compileKotlinArgumentsContributor.set(compileKotlinArgumentsContributor)
-
             task.excludedSourceDirs.set(excludedSourceDirs)
             task.kaptClasspath.from(kaptClasspath)
-            task.stubsDir.value(stubsDir).disallowChanges()
+
+            if (configureTaskOutputs) {
+                task.stubsDir.value(stubsDir).disallowChanges()
+            }
 
             if (!isIncludeCompileClasspath()) {
                 task.onlyIf {

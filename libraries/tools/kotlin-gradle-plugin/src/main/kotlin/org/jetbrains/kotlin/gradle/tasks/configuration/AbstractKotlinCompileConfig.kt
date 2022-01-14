@@ -14,11 +14,13 @@ import org.gradle.api.provider.Property
 import org.gradle.api.provider.ProviderFactory
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.dsl.Coroutines
+import org.jetbrains.kotlin.gradle.dsl.KotlinTopLevelExtension
 import org.jetbrains.kotlin.gradle.dsl.topLevelExtension
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.associateWithTransitiveClosure
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinCompilationData
+import org.jetbrains.kotlin.gradle.plugin.sources.DefaultLanguageSettingsBuilder
 import org.jetbrains.kotlin.gradle.plugin.sources.applyLanguageSettingsToKotlinOptions
 import org.jetbrains.kotlin.gradle.report.BuildMetricsReporterService
 import org.jetbrains.kotlin.gradle.tasks.*
@@ -36,12 +38,14 @@ import java.util.concurrent.Callable
 internal abstract class AbstractKotlinCompileConfig<TASK : AbstractKotlinCompile<*>>(
     protected val project: Project,
     val taskName: String,
+    /**
+     * Task outputs are exposed with external API directly, and in that scenario setting them from the config object introduces
+     * cyclic dependency. When Config objects are created internally, this is not the case.
+     */
+    protected val configureTaskOutputs: Boolean
 ) {
 
-    constructor(compilation: KotlinCompilationData<*>, taskName: String = compilation.compileKotlinTaskName) : this(
-        compilation.project,
-        taskName
-    ) {
+    constructor(compilation: KotlinCompilationData<*>, taskName: String = compilation.compileKotlinTaskName) : this(compilation.project, taskName, true) {
         val ext = compilation.project.topLevelExtension
         languageSettings.set(providers.provider { compilation.languageSettings })
 
@@ -59,6 +63,32 @@ internal abstract class AbstractKotlinCompileConfig<TASK : AbstractKotlinCompile
             providers.provider { ext.experimental.coroutines ?: propertiesProvider.coroutines ?: Coroutines.DEFAULT }
         ).disallowChanges()
         taskBuildDirectory.value(project.layout.buildDirectory.dir("$KOTLIN_BUILD_DIR_NAME/$taskName"))
+    }
+
+    constructor(project: Project, configuration: KotlinCompileOptionsImpl, ext: KotlinTopLevelExtension) : this(
+        project,
+        configuration.taskName,
+        false
+    ) {
+        useModuleDetection.value(configuration.useModuleDetection).disallowChanges()
+        source.from(configuration.source).disallowChanges()
+        pluginClasspath.from(configuration.pluginClasspath).disallowChanges()
+        classpath.from(configuration.classpath).disallowChanges()
+        friendPaths.from(configuration.friendPaths).disallowChanges()
+        moduleName.value(configuration.moduleName).disallowChanges()
+        sourceSetName.value(configuration.sourceSetName).disallowChanges()
+        multiPlatformEnabled.value(configuration.multiPlatformEnabled).disallowChanges()
+        coroutines.value(
+            providers.provider { ext.experimental.coroutines ?: propertiesProvider.coroutines ?: Coroutines.DEFAULT }
+        ).disallowChanges()
+        destinationDir.value(configuration.destinationDirLazy).disallowChanges()
+        taskBuildDirectory.value(configuration.taskBuildDirectoryLazy).disallowChanges()
+
+        val defaultLanguageSettings = DefaultLanguageSettingsBuilder(project)
+        defaultLanguageSettings.freeCompilerArgsProvider = configuration.explicitApiMode
+            .map { listOf(it.toCompilerArg()) }
+            .orElse(providers.provider { listOfNotNull(ext.explicitApi?.toCompilerArg()) })
+        languageSettings.set(defaultLanguageSettings)
     }
 
     protected val objectFactory: ObjectFactory = project.objects
@@ -141,8 +171,10 @@ internal abstract class AbstractKotlinCompileConfig<TASK : AbstractKotlinCompile
             task.sourceSetName.set(sourceSetName)
             task.multiPlatformEnabled.value(multiPlatformEnabled).disallowChanges()
 
-            task.taskBuildDirectory.value(taskBuildDirectory).disallowChanges()
-            task.destinationDirectory.value(destinationDir)
+            if (configureTaskOutputs) {
+                task.taskBuildDirectory.value(taskBuildDirectory).disallowChanges()
+                task.destinationDirectory.value(destinationDir)
+            }
             task.coroutines.set(coroutines)
             task.useModuleDetection.set(useModuleDetection)
             task.description = taskDescription.orNull

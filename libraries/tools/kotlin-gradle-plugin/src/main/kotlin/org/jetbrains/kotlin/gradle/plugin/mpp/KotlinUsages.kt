@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.androidJvm
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType.jvm
 import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
 import org.jetbrains.kotlin.gradle.plugin.usageByName
-import org.jetbrains.kotlin.gradle.targets.metadata.isKotlinGranularMetadataEnabled
 
 object KotlinUsages {
     const val KOTLIN_API = "kotlin-api"
@@ -161,7 +160,7 @@ object KotlinUsages {
         closestMatch(candidateValues.single { it?.name == name }!!)
     }
 
-    internal fun setupAttributesMatchingStrategy(project: Project, attributesSchema: AttributesSchema) {
+    internal fun setupAttributesMatchingStrategy(attributesSchema: AttributesSchema, isKotlinGranularMetadata: Boolean) {
         attributesSchema.attribute(USAGE_ATTRIBUTE) { strategy ->
             strategy.compatibilityRules.add(KotlinJavaRuntimeJarsCompatibility::class.java)
             strategy.disambiguationRules.add(KotlinUsagesDisambiguation::class.java)
@@ -169,7 +168,7 @@ object KotlinUsages {
             strategy.compatibilityRules.add(KotlinCinteropCompatibility::class.java)
             strategy.disambiguationRules.add(KotlinCinteropDisambiguation::class.java)
 
-            if (project.isKotlinGranularMetadataEnabled) {
+            if (isKotlinGranularMetadata) {
                 strategy.compatibilityRules.add(KotlinMetadataCompatibility::class.java)
                 strategy.disambiguationRules.add(KotlinMetadataDisambiguation::class.java)
             }

@@ -94,8 +94,17 @@ internal open class KotlinTasksProvider {
         kotlinOptions: KotlinCommonOptions,
         configuration: KotlinCompileConfig
     ): TaskProvider<out KotlinCompile> {
-        return project.registerTask(configuration.taskName, KotlinCompile::class.java, constructorArgs = listOf(kotlinOptions)).also {
-            configuration.configureTask(it)
+        return registerKotlinJVMTask(project, kotlinOptions, configuration.taskName) { configuration }
+    }
+
+    open fun registerKotlinJVMTask(
+        project: Project,
+        kotlinOptions: KotlinCommonOptions,
+        taskName: String,
+        configuration: (TaskProvider<out KotlinCompile>) -> KotlinCompileConfig
+    ): TaskProvider<out KotlinCompile> {
+        return project.registerTask(taskName, KotlinCompile::class.java, constructorArgs = listOf(kotlinOptions)).also {
+            configuration(it).configureTask(it)
         }
     }
 
