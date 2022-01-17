@@ -142,7 +142,13 @@ internal val localDeclarationsPhase = makeIrFilePhase(
                 private fun scopedVisibility(inInlineFunctionScope: Boolean): DescriptorVisibility =
                     if (inInlineFunctionScope) DescriptorVisibilities.PUBLIC else JavaDescriptorVisibilities.PACKAGE_VISIBILITY
             },
-            forceFieldsForInlineCaptures = true
+            forceFieldsForInlineCaptures = true,
+            postLocalDeclarationLoweringCallback = { (localFunctions, newParameterToOld, oldParameterToNew, newParameterToCaptured) ->
+                context.localFunctions = localFunctions
+                context.newParameterToOld = newParameterToOld
+                context.oldParameterToNew = oldParameterToNew
+                context.newParameterToCaptured = newParameterToCaptured
+            }
         )
     },
     name = "JvmLocalDeclarations",
@@ -386,23 +392,64 @@ private val jvmFilePhases = listOf(
     // makePatchParentsPhase()
 )
 
-val jvmLoweringPhases = NamedCompilerPhase(
-    name = "IrLowering",
-    description = "IR lowering",
-    nlevels = 1,
-    actions = setOf(defaultDumper, validationAction),
-    lower = validateIrBeforeLowering then
-            processOptionalAnnotationsPhase then
-            expectDeclarationsRemovingPhase then
-            serializeIrPhase then
-            scriptsToClassesPhase then
-            fileClassPhase then
-            jvmStaticInObjectPhase then
-            repeatedAnnotationPhase then
-            performByIrFile(lower = jvmFilePhases) then
-            generateMultifileFacadesPhase then
-            resolveInlineCallsPhase then
-            // should be last transformation
-            prepareForBytecodeInlining then
-            validateIrAfterLowering
-)
+val jvmLoweringPhases = buildJvmLoweringPhases("IrLowering", listOf("PerformByIrFile" to jvmFilePhases))
+
+private fun buildJvmLoweringPhases(
+    name: String,
+    phases: List<Pair<String, List<NamedCompilerPhase<JvmBackendContext, IrFile>>>>
+): NamedCompilerPhase<JvmBackendContext, IrModuleFragment> {
+    return NamedCompilerPhase(
+        name = name,
+        description = "IR lowering",
+        nlevels = 1,
+        actions = setOf(defaultDumper, validationAction),
+        lower =
+        fragmentSharedVariablesLowering then
+                validateIrBeforeLowering then
+                processOptionalAnnotationsPhase then
+                expectDeclarationsRemovingPhase then
+                serializeIrPhase then
+                scriptsToClassesPhase then
+                fileClassPhase then
+                jvmStaticInObjectPhase then
+                repeatedAnnotationPhase then
+                buildLoweringsPhase(phases) then
+                generateMultifileFacadesPhase then
+                resolveInlineCallsPhase then
+                // should be last transformation
+                prepareForBytecodeInlining then
+                validateIrAfterLowering
+    )
+}
+
+private fun buildLoweringsPhase(
+    perModuleLowerings: List<Pair<String, List<NamedCompilerPhase<JvmBackendContext, IrFile>>>>,
+): CompilerPhase<JvmBackendContext, IrModuleFragment, IrModuleFragment> {
+    var result: CompilerPhase<JvmBackendContext, IrModuleFragment, IrModuleFragment> =
+        perModuleLowerings[0].let { (name, lowerings) ->
+            performByIrFile(name = name, lower = lowerings)
+        }
+    for (i in 1 until perModuleLowerings.size) {
+        result = result then perModuleLowerings[i].let { (name, lowerings) ->
+            performByIrFile(name = name, lower = lowerings)
+        }
+    }
+    return result
+}
+
+val jvmFragmentLoweringPhases = run {
+    val localDeclarationsIndex = jvmFilePhases.indexOf(localDeclarationsPhase)
+    val loweringsUpToLocalDeclarations = jvmFilePhases.subList(0, localDeclarationsIndex + 1)
+    val remainingLowerings = jvmFilePhases.subList(localDeclarationsIndex + 1, jvmFilePhases.size)
+    buildJvmLoweringPhases(
+        "IrFragmentLowering",
+        listOf(
+            "PrefixOfIRPhases" to loweringsUpToLocalDeclarations,
+            "FragmentLowerings" to listOf(
+                fragmentLocalFunctionPatchLowering,
+                reflectiveAccessLowering,
+            ),
+            "SuffixOfIRPhases" to remainingLowerings
+        )
+    )
+}
