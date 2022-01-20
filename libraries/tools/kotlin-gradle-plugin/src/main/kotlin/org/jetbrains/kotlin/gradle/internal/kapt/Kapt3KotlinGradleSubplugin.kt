@@ -332,18 +332,13 @@ class Kapt3GradleSubplugin @Inject internal constructor(private val registry: To
     private fun Kapt3SubpluginContext.buildOptionsForAptMode(
         javacOptions: Provider<Map<String, String>>
     ): Provider<List<SubpluginOption>> {
-        disableAnnotationProcessingInJavaTask()
-
         return project.provider {
-            val generatedFilesDir = getKaptGeneratedSourcesDir(project, sourceSetName)
-            KaptWithAndroid.androidVariantData(this)?.addJavaSourceFoldersToModel(generatedFilesDir)
-
             buildKaptSubpluginOptions(
                 kaptExtension,
                 project,
                 javacOptions.get(),
                 "apt",
-                generatedSourcesDir = listOf(generatedFilesDir),
+                generatedSourcesDir = listOf(sourcesOutputDir),
                 generatedClassesDir = listOf(getKaptGeneratedClassesDir(project, sourceSetName)),
                 incrementalDataDir = listOf(getKaptIncrementalDataDir()),
                 includeCompileClasspath = includeCompileClasspath,
@@ -453,9 +448,12 @@ class Kapt3GradleSubplugin @Inject internal constructor(private val registry: To
             val androidVariantData = KaptWithAndroid.androidVariantData(this)
             if (androidVariantData != null) {
                 KaptWithAndroid.registerGeneratedJavaSourceForAndroid(this, project, androidVariantData, kaptTaskProvider)
+                androidVariantData.addJavaSourceFoldersToModel(sourcesOutputDir)
             } else {
                 registerGeneratedJavaSource(kaptTaskProvider, javaCompile)
             }
+
+            disableAnnotationProcessingInJavaTask()
         }
 
         if (taskClass == KaptWithKotlincTask::class.java) {
@@ -466,7 +464,6 @@ class Kapt3GradleSubplugin @Inject internal constructor(private val registry: To
             taskConfiguration as KaptWithoutKotlincConfig
             taskConfiguration.addSubpluginOptions(KAPT_SUBPLUGIN_ID, getDslKaptApOptions())
         }
-        taskConfiguration.addSubpluginOptions(kotlinCompile.map { it.pluginOptions.subpluginOptionsByPluginId })
 
         return kaptTaskProvider
     }

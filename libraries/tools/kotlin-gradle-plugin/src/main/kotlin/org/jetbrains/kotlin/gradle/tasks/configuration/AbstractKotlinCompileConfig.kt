@@ -48,7 +48,7 @@ internal abstract class AbstractKotlinCompileConfig<TASK : AbstractKotlinCompile
         friendPaths.from(Callable { compilation.friendPaths }).disallowChanges()
         if (compilation is KotlinCompilation<*>) {
             friendSourceSets.value(providers.provider { compilation.associateWithTransitiveClosure.map { it.name } }).disallowChanges()
-            pluginClasspath.from(compilation.project.configurations.getByName(compilation.pluginConfigurationName)).disallowChanges()
+            pluginClasspath.from(compilation.project.configurations.getByName(compilation.pluginConfigurationName))
         }
         moduleName.value(providers.provider { compilation.moduleName })
         sourceSetName.value(providers.provider { compilation.compilationPurpose }).disallowChanges()

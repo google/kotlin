@@ -62,11 +62,9 @@ abstract class KaptWithoutKotlincTask @Inject constructor(
     internal val projectDir = project.projectDir
 
     private fun getAnnotationProcessorOptions(): Map<String, String> {
-        val options = pluginOptions.subpluginOptionsByPluginId[Kapt3GradleSubplugin.KAPT_SUBPLUGIN_ID] ?: return emptyMap()
-
         val result = mutableMapOf<String, String>()
-        for (option in options) {
-            result[option.key] = option.value
+        pluginOptions.get().subpluginOptionsByPluginId[Kapt3GradleSubplugin.KAPT_SUBPLUGIN_ID]?.forEach {
+            result[it.key] = it.value
         }
         annotationProcessorOptionProviders.forEach { providers ->
             (providers as List<*>).forEach { provider ->

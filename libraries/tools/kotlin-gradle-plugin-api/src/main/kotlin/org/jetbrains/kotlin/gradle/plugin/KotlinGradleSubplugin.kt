@@ -19,6 +19,7 @@ package org.jetbrains.kotlin.gradle.plugin
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.compile.AbstractCompile
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import java.io.File
@@ -66,6 +67,7 @@ open class InternalSubpluginOption(key: String, value: String) : SubpluginOption
 
 /** Keeps one or more compiler options for one of more compiler plugins. */
 open class CompilerPluginConfig {
+    @get:Internal
     protected val optionsByPluginId = mutableMapOf<String, MutableList<SubpluginOption>>()
 
     fun allOptions(): Map<String, List<SubpluginOption>> = optionsByPluginId

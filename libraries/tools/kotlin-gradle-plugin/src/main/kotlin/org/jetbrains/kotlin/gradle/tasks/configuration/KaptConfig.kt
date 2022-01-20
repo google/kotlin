@@ -186,8 +186,12 @@ open class KaptConfig<TASK : KaptTask>(
 
     open fun configureTask(taskProvider: TaskProvider<TASK>) {
         taskProvider.configure { task ->
-            registerSubpluginOptions(pluginOptions, task.pluginOptions, task)
 
+            task.pluginOptions.set(
+                pluginOptions.map {
+                    return@map it.fold(CompilerPluginOptions()) { acc, options -> acc + options }
+                }
+            )
             task.classpath.from(classpath).disallowChanges()
             task.compiledSources.from(compiledSources).disallowChanges()
             task.sourceSetName.value(sourceSetName).disallowChanges()
@@ -222,14 +226,6 @@ open class KaptConfig<TASK : KaptTask>(
             task.onlyIf {
                 it as KaptTask
                 it.includeCompileClasspath.get() || !it.kaptClasspath.isEmpty
-            }
-
-            pluginOptions.get().forEach {
-                it.subpluginOptionsByPluginId.forEach { (id, options) ->
-                    options.forEach { option ->
-                        task.pluginOptions.addPluginArgument(id, option)
-                    }
-                }
             }
         }
     }
@@ -335,6 +331,9 @@ class KaptWithKotlincConfig(taskName: String, kotlinCompileTask: KotlinCompile, 
     val reportingSettings: Property<ReportingSettings> =
         objectFactory.property(providerFactory.provider { kotlinCompileTask.reportingSettings() })
 
+    /** Inputs from the Kotlin Compile task that are used just for task input checking. */
+    private val additionalPluginOptionsAsInputs: ListProperty<CompilerPluginOptions> = kotlinCompileTask.pluginOptions
+
     internal val compileKotlinArgumentsContributor: Property<CompilerArgumentsContributor<K2JVMCompilerArguments>> =
         objectFactory.property(providerFactory.provider { kotlinCompileTask.compilerArgumentsContributor })
 
@@ -356,6 +355,7 @@ class KaptWithKotlincConfig(taskName: String, kotlinCompileTask: KotlinCompile, 
         super.configureTask(taskProvider)
         taskProvider.configure { task ->
             task.pluginClasspath.from(pluginClasspath)
+            task.additionalPluginOptionsAsInputs.value(additionalPluginOptionsAsInputs).disallowChanges()
             task.compileKotlinArgumentsContributor.set(compileKotlinArgumentsContributor)
             task.javaPackagePrefix.set(javaPackagePrefix)
             task.reportingSettings.set(reportingSettings)

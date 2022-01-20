@@ -42,6 +42,10 @@ abstract class KaptWithKotlincTask @Inject constructor(
         objectFactory.newInstance<GradleCompileTaskProvider>(project.gradle, this, project)
     )
 
+    /** Used only as task input, actual values come from [compileKotlinArgumentsContributor]. */
+    @get:Nested
+    internal abstract val additionalPluginOptionsAsInputs: ListProperty<CompilerPluginOptions>
+
     override fun createCompilerArgs(): K2JVMCompilerArguments = K2JVMCompilerArguments()
 
     abstract override val kotlinDaemonJvmArguments: ListProperty<String>
@@ -58,7 +62,7 @@ abstract class KaptWithKotlincTask @Inject constructor(
 
         args.pluginClasspaths = pluginClasspath.toPathsArray()
 
-        val pluginOptionsWithKapt: CompilerPluginOptions = pluginOptions.withWrappedKaptOptions(
+        val pluginOptionsWithKapt: CompilerPluginOptions = pluginOptions.get().withWrappedKaptOptions(
             withApClasspath = kaptClasspath,
             changedFiles = changedFiles,
             classpathChanges = classpathChanges,

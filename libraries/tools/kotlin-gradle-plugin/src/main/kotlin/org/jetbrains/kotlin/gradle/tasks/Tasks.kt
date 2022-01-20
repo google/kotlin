@@ -223,8 +223,8 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
     @get:Classpath
     abstract val pluginClasspath: ConfigurableFileCollection
 
-    @get:Internal
-    internal val pluginOptions = CompilerPluginOptions()
+    @get:Nested
+    internal abstract val pluginOptions: ListProperty<CompilerPluginOptions>
 
     @get:Input
     val sourceFilesExtensions: ListProperty<String> = objects.listProperty(String::class.java).value(DEFAULT_KOTLIN_SOURCE_FILES_EXTENSIONS)
@@ -446,8 +446,7 @@ open class KotlinCompileArgumentsProvider<T : AbstractKotlinCompile<out CommonCo
     val isMultiplatform: Boolean = taskProvider.multiPlatformEnabled.get()
     private val pluginData = taskProvider.kotlinPluginData?.orNull
     val pluginClasspath: FileCollection = listOfNotNull(taskProvider.pluginClasspath, pluginData?.classpath).reduce(FileCollection::plus)
-    val pluginOptions: CompilerPluginOptions =
-        listOfNotNull(taskProvider.pluginOptions, pluginData?.options).reduce(CompilerPluginOptions::plus)
+    val pluginOptions: CompilerPluginOptions = taskProvider.pluginOptions.toSingleCompilerPluginOptions() + pluginData?.options
 }
 
 class KotlinJvmCompilerArgumentsProvider

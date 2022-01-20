@@ -1062,33 +1062,6 @@ private fun SourceSet.clearJavaSrcDirs() {
     java.setSrcDirs(emptyList<File>())
 }
 
-internal fun Task.registerSubpluginOptionsAsInputs(subpluginId: String, subpluginOptions: List<SubpluginOption>) {
-    // There might be several options with the same key. We group them together
-    // and add an index to the Gradle input property name to resolve possible duplication:
-    val pluginOptionsGrouped = subpluginOptions.groupBy { it.key }
-    for ((optionKey, optionsGroup) in pluginOptionsGrouped) {
-        optionsGroup.forEachIndexed { index, option ->
-            val indexSuffix = if (optionsGroup.size > 1) ".$index" else ""
-            when (option) {
-                is InternalSubpluginOption -> Unit
-
-                is CompositeSubpluginOption -> {
-                    val subpluginIdWithWrapperKey = "$subpluginId.$optionKey$indexSuffix"
-                    registerSubpluginOptionsAsInputs(subpluginIdWithWrapperKey, option.originalOptions)
-                }
-
-                is FilesSubpluginOption -> when (option.kind) {
-                    FilesOptionKind.INTERNAL -> Unit
-                }.run { /* exhaustive when */ }
-
-                else -> {
-                    inputs.property("$subpluginId." + option.key + indexSuffix, Callable { option.value })
-                }
-            }
-        }
-    }
-}
-
 //copied from BasePlugin.getLocalVersion
 internal val androidPluginVersion by lazy {
     try {

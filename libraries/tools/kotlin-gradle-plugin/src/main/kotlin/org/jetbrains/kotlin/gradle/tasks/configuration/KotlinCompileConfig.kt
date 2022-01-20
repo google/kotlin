@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.gradle.tasks.configuration
 
 import org.gradle.api.Project
-import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.file.ConfigurableFileCollection
@@ -22,7 +21,6 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmAndroidCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinWithJavaCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinCompilationData
-import org.jetbrains.kotlin.gradle.plugin.registerSubpluginOptionsAsInputs
 import org.jetbrains.kotlin.gradle.tasks.CompilerPluginOptions
 import org.jetbrains.kotlin.gradle.tasks.KOTLIN_BUILD_DIR_NAME
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -127,7 +125,7 @@ internal open class BaseKotlinCompileConfig<TASK : KotlinCompile>(
         super.configureTask(taskProvider)
 
         taskProvider.configure { task ->
-            registerSubpluginOptions(additionalPluginOptions, task.pluginOptions, task)
+            task.pluginOptions.addAll(additionalPluginOptions)
             task.associatedJavaCompileTaskTargetCompatibility.set(associatedJavaCompileTaskTargetCompatibility)
             task.associatedJavaCompileTaskSources.from(associatedJavaCompileTaskSources)
             task.associatedJavaCompileTaskName.set(associatedJavaCompileTaskName)
@@ -145,21 +143,6 @@ internal open class BaseKotlinCompileConfig<TASK : KotlinCompile>(
             task.usePreciseJavaTracking = usePreciseJavaTracking.get()
             if (useFir.getOrElse(false)) {
                 task.kotlinOptions.useFir = true
-            }
-        }
-    }
-}
-
-internal fun registerSubpluginOptions(
-    pluginOptions: ListProperty<CompilerPluginOptions>,
-    taskPluginOptions: CompilerPluginOptions,
-    task: Task
-) {
-    pluginOptions.get().forEach {
-        it.subpluginOptionsByPluginId.forEach { (id, subpluginOptions) ->
-            task.registerSubpluginOptionsAsInputs(id, subpluginOptions)
-            for (option in subpluginOptions) {
-                taskPluginOptions.addPluginArgument(id, option)
             }
         }
     }

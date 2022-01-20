@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.gradle.plugin.LanguageSettingsBuilder
 import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildStatsService
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinNativeCompile
+import org.jetbrains.kotlin.gradle.tasks.toSingleCompilerPluginOptions
 import org.jetbrains.kotlin.gradle.utils.SingleWarningPerBuild
 import org.jetbrains.kotlin.project.model.LanguageSettings
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
@@ -99,7 +100,7 @@ internal class DefaultLanguageSettingsBuilder(@Transient private val project: Pr
         get() {
             val pluginOptionsTask = compilerPluginOptionsTask.value ?: return null
             return when (pluginOptionsTask) {
-                is AbstractKotlinCompile<*> -> pluginOptionsTask.pluginOptions
+                is AbstractKotlinCompile<*> -> pluginOptionsTask.pluginOptions.toSingleCompilerPluginOptions()
                 is AbstractKotlinNativeCompile<*, *> -> pluginOptionsTask.compilerPluginOptions
                 else -> error("Unexpected task: $pluginOptionsTask")
             }.arguments

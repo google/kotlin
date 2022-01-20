@@ -64,8 +64,8 @@ abstract class KaptTask @Inject constructor(
     @get:InputFiles
     abstract val classpathStructure: ConfigurableFileCollection
 
-    @get:Internal
-    internal val pluginOptions = CompilerPluginOptions()
+    @get:Nested
+    internal abstract val pluginOptions: Property<CompilerPluginOptions>
 
     /**
      * Output directory that contains caches necessary to support incremental annotation processing.
