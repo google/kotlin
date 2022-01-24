@@ -214,7 +214,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
     internal fun reportingSettings() = buildMetricsReporterService.orNull?.parameters?.reportingSettings ?: ReportingSettings()
 
     @get:Input
-    abstract val useModuleDetection: Property<Boolean>
+    internal abstract val useModuleDetection: Property<Boolean>
 
     @get:Internal
     protected val multiModuleICSettings: MultiModuleICSettings
@@ -254,7 +254,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
     internal val commonSourceSet: ConfigurableFileCollection = objects.fileCollection()
 
     @get:Input
-    abstract val moduleName: Property<String>
+    internal abstract val moduleName: Property<String>
 
     @get:Internal
     val abiSnapshotFile
@@ -419,7 +419,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
     )
 
     @get:Input
-    abstract val multiPlatformEnabled: Property<Boolean>
+    internal abstract val multiPlatformEnabled: Property<Boolean>
 
     @get:Internal
     internal val abstractKotlinCompileArgumentsContributor by lazy {

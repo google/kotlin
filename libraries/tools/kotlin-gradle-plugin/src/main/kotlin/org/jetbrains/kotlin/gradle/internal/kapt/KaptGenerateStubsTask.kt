@@ -51,7 +51,7 @@ abstract class KaptGenerateStubsTask @Inject constructor(
     abstract val stubsDir: DirectoryProperty
 
     @get:Internal
-    abstract val excludedSourceDirs: ListProperty<File>
+    internal abstract val excludedSourceDirs: ListProperty<File>
 
     @get:Internal
     internal abstract val javaSourceRoots: ConfigurableFileCollection
