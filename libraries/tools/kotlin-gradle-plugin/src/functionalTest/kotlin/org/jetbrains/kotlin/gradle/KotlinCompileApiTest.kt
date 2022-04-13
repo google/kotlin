@@ -26,8 +26,8 @@ class KotlinCompileApiTest {
 
     private lateinit var project: ProjectInternal
     private lateinit var plugin: KotlinJvmFactory
-    private lateinit var kotlinJvmCompileTask: KotlinJvmCompile
-    private lateinit var kotlinCompileTask: KotlinCompile
+    private lateinit var taskApi: KotlinJvmCompile
+    private lateinit var taskImpl: KotlinCompile
 
     companion object {
         private const val TASK_NAME = "kotlinCompile"
@@ -38,14 +38,14 @@ class KotlinCompileApiTest {
         project = buildProject {}
         plugin = project.plugins.apply(KotlinBaseApiPlugin::class.java)
         plugin.registerKotlinJvmCompileTask(TASK_NAME).configure { task ->
-            kotlinJvmCompileTask = task
+            taskApi = task
         }
-        kotlinCompileTask = project.tasks.getByName(TASK_NAME) as KotlinCompile
+        taskImpl = project.tasks.getByName(TASK_NAME) as KotlinCompile
     }
 
     @Test
     fun testTaskName() {
-        assertEquals(TASK_NAME, kotlinCompileTask.name)
+        assertEquals(TASK_NAME, taskImpl.name)
     }
 
     @Test
@@ -53,32 +53,32 @@ class KotlinCompileApiTest {
         val sourcePath = tmpDir.newFolder().resolve("foo.kt").also {
             it.createNewFile()
         }
-        kotlinJvmCompileTask.setSource(sourcePath)
-        assertEquals(setOf(sourcePath), kotlinCompileTask.sources.files)
+        taskApi.setSource(sourcePath)
+        assertEquals(setOf(sourcePath), taskImpl.sources.files)
 
         val sourcesDir = tmpDir.newFolder().also {
             it.resolve("a.kt").createNewFile()
             it.resolve("b.kt").createNewFile()
         }
-        kotlinJvmCompileTask.setSource(sourcePath, sourcesDir)
+        taskApi.setSource(sourcePath, sourcesDir)
         assertEquals(
             setOf(sourcePath, sourcesDir.resolve("a.kt"), sourcesDir.resolve("b.kt")),
-            kotlinCompileTask.sources.files
+            taskImpl.sources.files
         )
     }
 
     @Test
     fun testFriendPaths() {
         val friendPath = tmpDir.newFolder()
-        kotlinJvmCompileTask.friendPaths.from(friendPath)
-        assertEquals(setOf(friendPath), kotlinCompileTask.friendPaths.files)
+        taskApi.friendPaths.from(friendPath)
+        assertEquals(setOf(friendPath), taskImpl.friendPaths.files)
     }
 
     @Test
-    fun testClasspath() {
+    fun testLibraries() {
         val classpathEntries = setOf(tmpDir.newFolder(), tmpDir.newFolder())
-        kotlinJvmCompileTask.libraries.from(classpathEntries)
-        assertEquals(classpathEntries, kotlinCompileTask.libraries.files)
+        taskApi.libraries.from(classpathEntries)
+        assertEquals(classpathEntries, taskImpl.libraries.files)
     }
 
     @Test
@@ -87,52 +87,52 @@ class KotlinCompileApiTest {
         plugin.addCompilerPluginDependency(project.provider { project.files(pluginDependency) })
 
         val anotherCompilerPlugin = tmpDir.newFile()
-        kotlinJvmCompileTask.pluginClasspath.from(plugin.getCompilerPlugins(), anotherCompilerPlugin)
-        assertEquals(setOf(pluginDependency, anotherCompilerPlugin), kotlinCompileTask.pluginClasspath.files)
+        taskApi.pluginClasspath.from(plugin.getCompilerPlugins(), anotherCompilerPlugin)
+        assertEquals(setOf(pluginDependency, anotherCompilerPlugin), taskImpl.pluginClasspath.files)
     }
 
     @Test
     fun testModuleName() {
-        kotlinJvmCompileTask.moduleName.set("foo")
-        assertEquals("foo", kotlinCompileTask.moduleName.get())
+        taskApi.moduleName.set("foo")
+        assertEquals("foo", taskImpl.moduleName.get())
     }
 
     @Test
     fun testSourceSetName() {
-        kotlinJvmCompileTask.sourceSetName.set("sourceSetFoo")
-        assertEquals("sourceSetFoo", kotlinCompileTask.sourceSetName.get())
+        taskApi.sourceSetName.set("sourceSetFoo")
+        assertEquals("sourceSetFoo", taskImpl.sourceSetName.get())
     }
 
     @Test
     fun testTaskBuildDirectory() {
         val taskBuildDir = tmpDir.newFolder()
-        kotlinJvmCompileTask.destinationDirectory.fileValue(taskBuildDir)
-        assertEquals(taskBuildDir, kotlinCompileTask.destinationDirectory.get().asFile)
+        taskApi.destinationDirectory.fileValue(taskBuildDir)
+        assertEquals(taskBuildDir, taskImpl.destinationDirectory.get().asFile)
     }
 
     @Test
     fun testDestinationDirectory() {
         val destinationDir = tmpDir.newFolder()
-        kotlinJvmCompileTask.destinationDirectory.fileValue(destinationDir)
-        assertEquals(destinationDir, kotlinCompileTask.destinationDirectory.get().asFile)
+        taskApi.destinationDirectory.fileValue(destinationDir)
+        assertEquals(destinationDir, taskImpl.destinationDirectory.get().asFile)
     }
 
     @Test
     fun testMultiplatform() {
-        kotlinJvmCompileTask.multiPlatformEnabled.set(true)
-        assertEquals(true, kotlinCompileTask.multiPlatformEnabled.get())
+        taskApi.multiPlatformEnabled.set(true)
+        assertEquals(true, taskImpl.multiPlatformEnabled.get())
 
-        kotlinJvmCompileTask.multiPlatformEnabled.set(false)
-        assertEquals(false, kotlinCompileTask.multiPlatformEnabled.get())
+        taskApi.multiPlatformEnabled.set(false)
+        assertEquals(false, taskImpl.multiPlatformEnabled.get())
     }
 
     @Test
     fun testModuleDetection() {
-        kotlinJvmCompileTask.useModuleDetection.set(true)
-        assertEquals(true, kotlinCompileTask.useModuleDetection.get())
+        taskApi.useModuleDetection.set(true)
+        assertEquals(true, taskImpl.useModuleDetection.get())
 
-        kotlinJvmCompileTask.useModuleDetection.set(false)
-        assertEquals(false, kotlinCompileTask.useModuleDetection.get())
+        taskApi.useModuleDetection.set(false)
+        assertEquals(false, taskImpl.useModuleDetection.get())
     }
 
 
@@ -142,9 +142,9 @@ class KotlinCompileApiTest {
         parentOptions.moduleName = "foo"
         parentOptions.javaParameters = true
         parentOptions.languageVersion = "lang_version"
-        kotlinJvmCompileTask.parentKotlinOptions.set(parentOptions)
+        taskApi.parentKotlinOptions.set(parentOptions)
 
-        kotlinCompileTask.parentKotlinOptions.get().let {
+        taskImpl.parentKotlinOptions.get().let {
             assertEquals(parentOptions.moduleName, it.moduleName)
             assertEquals(parentOptions.javaParameters, it.javaParameters)
             assertEquals(parentOptions.languageVersion, it.languageVersion)
@@ -155,6 +155,6 @@ class KotlinCompileApiTest {
     fun testTopLevelExtension() {
         plugin.kotlinExtension.explicitApi = ExplicitApiMode.Strict
         project.evaluate()
-        assertTrue(ExplicitApiMode.Strict.toCompilerArg() in kotlinCompileTask.kotlinOptions.freeCompilerArgs)
+        assertTrue(ExplicitApiMode.Strict.toCompilerArg() in taskImpl.kotlinOptions.freeCompilerArgs)
     }
 }
