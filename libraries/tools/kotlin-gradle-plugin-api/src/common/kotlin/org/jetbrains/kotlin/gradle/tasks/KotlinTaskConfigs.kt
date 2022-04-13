@@ -92,7 +92,7 @@ interface KotlinJvmCompile : BaseKotlinCompile, KotlinCompile<KotlinJvmOptions> 
 
     // JVM specific
     @get:Internal("Takes part in compiler args.")
-    val parentKotlinOptionsImpl: Property<KotlinJvmOptions>
+    val parentKotlinOptions: Property<KotlinJvmOptions>
 }
 
 interface KaptGenerateStubs : KotlinJvmCompile {

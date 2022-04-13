@@ -142,9 +142,9 @@ class KotlinCompileApiTest {
         parentOptions.moduleName = "foo"
         parentOptions.javaParameters = true
         parentOptions.languageVersion = "lang_version"
-        kotlinJvmCompileTask.parentKotlinOptionsImpl.set(parentOptions)
+        kotlinJvmCompileTask.parentKotlinOptions.set(parentOptions)
 
-        kotlinCompileTask.parentKotlinOptionsImpl.get().let {
+        kotlinCompileTask.parentKotlinOptions.get().let {
             assertEquals(parentOptions.moduleName, it.moduleName)
             assertEquals(parentOptions.javaParameters, it.javaParameters)
             assertEquals(parentOptions.languageVersion, it.languageVersion)

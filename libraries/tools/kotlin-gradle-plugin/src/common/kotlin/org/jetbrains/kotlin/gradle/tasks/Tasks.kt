@@ -489,7 +489,7 @@ class KotlinJvmCompilerArgumentsProvider
     val compileClasspath: Iterable<File> = taskProvider.libraries
     val destinationDir: File = taskProvider.destinationDirectory.get().asFile
     internal val kotlinOptions: List<KotlinJvmOptionsImpl> = listOfNotNull(
-        taskProvider.parentKotlinOptionsImpl.orNull as? KotlinJvmOptionsImpl,
+        taskProvider.parentKotlinOptions.orNull as? KotlinJvmOptionsImpl,
         taskProvider.kotlinOptions as KotlinJvmOptionsImpl
     )
 }
