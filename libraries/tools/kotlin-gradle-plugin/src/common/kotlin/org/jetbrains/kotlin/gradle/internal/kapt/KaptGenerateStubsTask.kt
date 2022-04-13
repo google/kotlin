@@ -19,7 +19,6 @@ package org.jetbrains.kotlin.gradle.internal
 import org.gradle.api.file.*
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.file.ConfigurableFileCollection
-import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
 import org.gradle.work.Incremental
@@ -51,9 +50,6 @@ abstract class KaptGenerateStubsTask @Inject constructor(
     @get:Internal
     abstract override val libraries: ConfigurableFileCollection
 
-    @get:Internal
-    internal abstract val excludedSourceDirs: ListProperty<File>
-
     /* Used as input as empty kapt classpath should not trigger stub generation, but a non-empty one should. */
     @Input
     fun getIfKaptClasspathIsPresent() = !kaptClasspath.isEmpty
@@ -74,8 +70,7 @@ abstract class KaptGenerateStubsTask @Inject constructor(
 
     private fun File.isSourceRootAllowed(): Boolean =
         !destinationDirectory.get().asFile.isParentOf(this) &&
-                !stubsDir.asFile.get().isParentOf(this) &&
-                excludedSourceDirs.get().none { it.isParentOf(this) }
+                !stubsDir.asFile.get().isParentOf(this)
 
     override fun skipCondition(): Boolean = sources.isEmpty && javaSources.isEmpty
 
