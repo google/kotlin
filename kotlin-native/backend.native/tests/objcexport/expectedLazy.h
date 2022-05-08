@@ -1154,6 +1154,54 @@ __attribute__((swift_name("NoAutoreleaseKt")))
 + (void)useIntArrayArray:(KtKotlinIntArray *)array __attribute__((swift_name("useIntArray(array:)")));
 @end
 
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("ObjCNameC1A")))
+@interface KtObjCNameC1A : KtBase
+- (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
++ (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+- (NSString *)foo __attribute__((swift_name("foo()")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("ObjCNameA")))
+@interface KtObjCNameA : KtBase
++ (NSString *)withUserId:(NSString *)userId __attribute__((swift_name("with(userId:)")));
++ (BOOL)supportsFeatures:(BOOL)features __attribute__((swift_name("supports(_:)")));
++ (NSString *)scanForPeripheralsWithServices:(int32_t)serviceUUIDs options:(NSString *)options __attribute__((swift_name("scanForPeripherals(withServices:options:)")));
++ (NSString *)registerForConnectionEventsWithOptions:(NSString *)options __attribute__((swift_name("registerForConnectionEvents(options:)")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("ObjCNameC1B")))
+@interface KtObjCNameC1B : KtBase
+- (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
++ (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+- (NSString *)foo __attribute__((swift_name("foo()")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("MySwiftArray")))
+@interface KtMyObjCArray : KtBase
+- (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
++ (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+- (int32_t)indexOfObject:(int32_t)element __attribute__((swift_name("index(of:)")));
+@property (readonly) int32_t count __attribute__((swift_name("count")));
+@end;
+
+__attribute__((swift_name("ObjCNameI1")))
+@protocol KtObjCNameI1
+@required
+@property (readonly) int32_t someOtherValue __attribute__((swift_name("someOtherValue")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("ObjCNameC2")))
+@interface KtObjCNameC2 : KtBase <KtObjCNameI1>
+- (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
++ (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+@property int32_t someOtherValue __attribute__((swift_name("someOtherValue")));
+@end;
+
 __attribute__((swift_name("OverrideKotlinMethods2")))
 @protocol KtOverrideKotlinMethods2
 @required

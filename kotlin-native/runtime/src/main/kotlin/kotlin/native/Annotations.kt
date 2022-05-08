@@ -83,3 +83,16 @@ public annotation class EagerInitialization
 @Retention(AnnotationRetention.BINARY)
 public actual annotation class CName(actual val externName: String = "", actual val shortName: String = "")
 
+/**
+ * Instructs the Kotlin compiler to use a custom Objective-C and/or Swift name for this class, property, parameter, function or file.
+ */
+@Target(
+        AnnotationTarget.CLASS,
+        AnnotationTarget.PROPERTY,
+        AnnotationTarget.VALUE_PARAMETER,
+        AnnotationTarget.FUNCTION,
+        AnnotationTarget.FILE
+)
+@Retention(AnnotationRetention.BINARY)
+@MustBeDocumented
+public actual annotation class ObjCName(actual val name: String = "", actual val swiftName: String = "")

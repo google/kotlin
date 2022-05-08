@@ -585,7 +585,8 @@ internal class ObjCExportTranslatorImpl(
 
         val getterBridge = mapper.bridgeMethod(baseProperty.getter!!)
         val type = mapReturnType(getterBridge.returnBridge, property.getter!!, objCExportScope)
-        val name = namer.getPropertyName(baseProperty)
+        val propertyName = namer.getPropertyName(baseProperty)
+        val name = propertyName.objCName
 
         val attributes = mutableListOf<String>()
 
@@ -607,7 +608,7 @@ internal class ObjCExportTranslatorImpl(
         val getterSelector = getSelector(baseProperty.getter!!)
         val getterName: String? = if (getterSelector != name) getterSelector else null
 
-        val declarationAttributes = mutableListOf(swiftNameAttribute(name))
+        val declarationAttributes = mutableListOf(swiftNameAttribute(propertyName.swiftName))
         declarationAttributes.addIfNotNull(mapper.getDeprecation(property)?.toDeprecationAttribute())
 
         return ObjCProperty(name, property, type, attributes, setterName, getterName, declarationAttributes)
