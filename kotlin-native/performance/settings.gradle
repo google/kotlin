@@ -9,6 +9,7 @@ include ':helloworld'
 include ':numerical'
 include ':videoplayer'
 include ':framework'
+include ':splay'
 include ':startup'
 if (System.getProperty("os.name") == "Mac OS X") {
     include ':objcinterop'
