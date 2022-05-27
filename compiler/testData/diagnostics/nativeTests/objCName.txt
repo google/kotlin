@@ -1,0 +1,90 @@
+package
+
+@kotlin.native.ObjCName(name = "validName", swiftName = "invalid.name") public val invalidCharactersObjCNameA: kotlin.Int = 0
+@kotlin.native.ObjCName(name = "invalid.name", swiftName = "validName") public val invalidCharactersObjCNameB: kotlin.Int = 0
+@kotlin.native.ObjCName public val invalidObjCName: kotlin.Int = 0
+
+@kotlin.native.ObjCName(name = "ObjCClass", swiftName = "SwiftClass") public open class KotlinClass {
+    public constructor KotlinClass()
+    @kotlin.native.ObjCName(name = "objCProperty") public open var kotlinProperty: kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+    @kotlin.native.ObjCName(swiftName = "swiftFunction") public open fun @receiver:kotlin.native.ObjCName(name = "objCReceiver") kotlin.Int.kotlinFunction(/*0*/ @kotlin.native.ObjCName(name = "objCParam") kotlinParam: kotlin.Int): kotlin.Int
+}
+
+public interface KotlinInterfaceA {
+    @kotlin.native.ObjCName(name = "objCPropertyA", swiftName = "swiftPropertyA") public abstract var kotlinPropertyA: kotlin.Int
+    @kotlin.native.ObjCName(name = "objCPropertyB", swiftName = "swiftPropertyB") public abstract var kotlinPropertyB: kotlin.Int
+    @kotlin.native.ObjCName(name = "objCPropertyB") public abstract var kotlinPropertyC: kotlin.Int
+    @kotlin.native.ObjCName(swiftName = "swiftPropertyB") public abstract var kotlinPropertyD: kotlin.Int
+    public abstract var kotlinPropertyE: kotlin.Int
+    public abstract var kotlinPropertyF: kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+    @kotlin.native.ObjCName(name = "objCFunctionA", swiftName = "swiftFunctionA") public abstract fun @receiver:kotlin.native.ObjCName(name = "objCReceiver", swiftName = "swiftReceiver") kotlin.Int.kotlinFunctionA(/*0*/ @kotlin.native.ObjCName(name = "objCParam", swiftName = "swiftParam") kotlinParam: kotlin.Int): kotlin.Int
+    @kotlin.native.ObjCName(name = "objCFunctionB", swiftName = "swiftFunctionB") public abstract fun @receiver:kotlin.native.ObjCName(name = "objCReceiver", swiftName = "swiftReceiver") kotlin.Int.kotlinFunctionB(/*0*/ @kotlin.native.ObjCName(name = "objCParam", swiftName = "swiftParam") kotlinParam: kotlin.Int): kotlin.Int
+    @kotlin.native.ObjCName(name = "objCFunctionC", swiftName = "swiftFunctionC") public abstract fun @receiver:kotlin.native.ObjCName(name = "objCReceiver", swiftName = "swiftReceiver") kotlin.Int.kotlinFunctionC(/*0*/ @kotlin.native.ObjCName(name = "objCParam", swiftName = "swiftParam") kotlinParam: kotlin.Int): kotlin.Int
+    @kotlin.native.ObjCName(name = "objCFunctionD", swiftName = "swiftFunctionD") public abstract fun @receiver:kotlin.native.ObjCName(name = "objCReceiver", swiftName = "swiftReceiver") kotlin.Int.kotlinFunctionD(/*0*/ @kotlin.native.ObjCName(name = "objCParam", swiftName = "swiftParam") kotlinParam: kotlin.Int): kotlin.Int
+    @kotlin.native.ObjCName(name = "objCFunctionE", swiftName = "swiftFunctionE") public abstract fun kotlin.Int.kotlinFunctionE(/*0*/ @kotlin.native.ObjCName(name = "objCParam", swiftName = "swiftParam") kotlinParam: kotlin.Int): kotlin.Int
+}
+
+public interface KotlinInterfaceB {
+    @kotlin.native.ObjCName(name = "objCPropertyA", swiftName = "swiftPropertyA") public abstract var kotlinPropertyA: kotlin.Int
+    @kotlin.native.ObjCName(name = "objCPropertyBB", swiftName = "swiftPropertyB") public abstract var kotlinPropertyB: kotlin.Int
+    @kotlin.native.ObjCName(swiftName = "swiftPropertyC") public abstract var kotlinPropertyC: kotlin.Int
+    @kotlin.native.ObjCName(name = "objCPropertyD") public abstract var kotlinPropertyD: kotlin.Int
+    @kotlin.native.ObjCName(name = "objCPropertyE") public abstract var kotlinPropertyE: kotlin.Int
+    public abstract var kotlinPropertyF: kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+    @kotlin.native.ObjCName(name = "objCFunctionA", swiftName = "swiftFunctionA") public abstract fun @receiver:kotlin.native.ObjCName(name = "objCReceiver", swiftName = "swiftReceiver") kotlin.Int.kotlinFunctionA(/*0*/ @kotlin.native.ObjCName(name = "objCParam", swiftName = "swiftParam") kotlinParam: kotlin.Int): kotlin.Int
+    @kotlin.native.ObjCName(name = "objCFunctionBB", swiftName = "swiftFunctionB") public abstract fun @receiver:kotlin.native.ObjCName(name = "objCReceiver", swiftName = "swiftReceiver") kotlin.Int.kotlinFunctionB(/*0*/ @kotlin.native.ObjCName(name = "objCParam", swiftName = "swiftParam") kotlinParam: kotlin.Int): kotlin.Int
+    @kotlin.native.ObjCName(name = "objCFunctionC", swiftName = "swiftFunctionC") public abstract fun @receiver:kotlin.native.ObjCName(name = "objCReceiverC", swiftName = "swiftReceiver") kotlin.Int.kotlinFunctionC(/*0*/ @kotlin.native.ObjCName(name = "objCParam", swiftName = "swiftParam") kotlinParam: kotlin.Int): kotlin.Int
+    @kotlin.native.ObjCName(name = "objCFunctionD", swiftName = "swiftFunctionD") public abstract fun @receiver:kotlin.native.ObjCName(name = "objCReceiver", swiftName = "swiftReceiver") kotlin.Int.kotlinFunctionD(/*0*/ @kotlin.native.ObjCName(name = "objCParamD", swiftName = "swiftParam") kotlinParam: kotlin.Int): kotlin.Int
+    public abstract fun @receiver:kotlin.native.ObjCName(name = "objCFunctionE", swiftName = "swiftFunctionE") kotlin.Int.kotlinFunctionE(/*0*/ @kotlin.native.ObjCName(name = "objCParam", swiftName = "swiftParam") kotlinParam: kotlin.Int): kotlin.Int
+}
+
+public final class KotlinOverrideClass : KotlinInterfaceA, KotlinInterfaceB {
+    public constructor KotlinOverrideClass()
+    public open override /*2*/ var kotlinPropertyA: kotlin.Int
+    public open override /*2*/ var kotlinPropertyB: kotlin.Int
+    public open override /*2*/ var kotlinPropertyC: kotlin.Int
+    public open override /*2*/ var kotlinPropertyD: kotlin.Int
+    public open override /*2*/ var kotlinPropertyE: kotlin.Int
+    public open override /*2*/ var kotlinPropertyF: kotlin.Int
+    public open override /*2*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*2*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*2*/ /*fake_override*/ fun toString(): kotlin.String
+    public open override /*2*/ fun kotlin.Int.kotlinFunctionA(/*0*/ kotlinParam: kotlin.Int): kotlin.Int
+    public open override /*2*/ fun kotlin.Int.kotlinFunctionB(/*0*/ kotlinParam: kotlin.Int): kotlin.Int
+    public open override /*2*/ fun kotlin.Int.kotlinFunctionC(/*0*/ kotlinParam: kotlin.Int): kotlin.Int
+    public open override /*2*/ fun kotlin.Int.kotlinFunctionD(/*0*/ kotlinParam: kotlin.Int): kotlin.Int
+    public open override /*2*/ fun kotlin.Int.kotlinFunctionE(/*0*/ kotlinParam: kotlin.Int): kotlin.Int
+}
+
+@kotlin.native.ObjCName(name = "ObjCSubClass", swiftName = "SwiftSubClass") public final class KotlinSubClass : KotlinClass {
+    public constructor KotlinSubClass()
+    @kotlin.native.ObjCName(name = "objCProperty") public open override /*1*/ var kotlinProperty: kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+    @kotlin.native.ObjCName(swiftName = "swiftFunction") public open override /*1*/ fun @receiver:kotlin.native.ObjCName(name = "objCReceiver") kotlin.Int.kotlinFunction(/*0*/ @kotlin.native.ObjCName(name = "objCParam") kotlinParam: kotlin.Int): kotlin.Int
+}
+
+package kotlin {
+
+    package kotlin.native {
+
+        @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.CLASS, AnnotationTarget.PROPERTY, AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FUNCTION}) @kotlin.annotation.Retention(value = AnnotationRetention.BINARY) @kotlin.annotation.MustBeDocumented public final annotation class ObjCName : kotlin.Annotation {
+            public constructor ObjCName(/*0*/ name: kotlin.String = ..., /*1*/ swiftName: kotlin.String = ...)
+            public final val name: kotlin.String
+            public final val swiftName: kotlin.String
+            public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+            public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+            public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+        }
+    }
+}

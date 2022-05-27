@@ -17,11 +17,13 @@ import org.jetbrains.kotlin.resolve.checkers.DeclarationCheckerContext
 // Note: IdentifierChecker doesn't check typealiases, so inheriting DeclarationChecker as well.
 // Originally based on JvmSimpleNameBacktickChecker.
 class NativeIdentifierChecker(private val languageVersionSettings: LanguageVersionSettings) : IdentifierChecker, DeclarationChecker {
-    // Also includes characters used by IR mangler (see MangleConstant).
-    private val invalidChars = setOf(
-        '.', ';', ',', '(', ')', '[', ']', '{', '}', '/', '<', '>',
-        ':', '\\', '$', '&', '~', '*', '?', '#', '|', '§', '%', '@',
-    )
+    companion object {
+        // Also includes characters used by IR mangler (see MangleConstant).
+        val invalidChars = setOf(
+            '.', ';', ',', '(', ')', '[', ']', '{', '}', '/', '<', '>',
+            ':', '\\', '$', '&', '~', '*', '?', '#', '|', '§', '%', '@',
+        )
+    }
 
     override fun checkIdentifier(simpleNameExpression: KtSimpleNameExpression, diagnosticHolder: DiagnosticSink) {
         reportIfNeeded(simpleNameExpression.getReferencedName(), { simpleNameExpression.getIdentifier() }, diagnosticHolder)

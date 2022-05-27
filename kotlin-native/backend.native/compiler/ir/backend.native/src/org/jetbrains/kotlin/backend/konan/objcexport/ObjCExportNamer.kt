@@ -922,7 +922,7 @@ private fun ObjCExportMapper.canHaveSameName(first: PropertyDescriptor, second: 
 
 private fun DeclarationDescriptor.getObjCName(forSwift: Boolean, default: String? = null): String {
     annotations.findAnnotation(KonanFqNames.objCName)?.let { annotation ->
-        fun getName(param: String) = annotation.argumentValue(param)?.value?.cast<String>()?.takeIf(Name::isValidIdentifier)
+        fun getName(param: String) = annotation.argumentValue(param)?.value?.cast<String>()
         if (forSwift) getName("swiftName")?.let { return it }
         getName("name")?.let { return it }
     }

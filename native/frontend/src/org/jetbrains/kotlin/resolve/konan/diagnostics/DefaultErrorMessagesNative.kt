@@ -38,7 +38,11 @@ private val DIAGNOSTIC_FACTORY_TO_RENDERER by lazy {
             "@ThreadLocal is applicable only to property with backing field, to property with delegation or to objects"
         )
         put(ErrorsNative.INAPPLICABLE_THREAD_LOCAL_TOP_LEVEL, "@ThreadLocal is applicable only to top level declarations")
-        put(ErrorsNative.INVALID_CHARACTERS_NATIVE, "Name {0}", CommonRenderers.STRING);
+        put(ErrorsNative.INVALID_CHARACTERS_NATIVE, "Name {0}", CommonRenderers.STRING)
+        put(ErrorsNative.INAPPLICABLE_OBJC_NAME, "@ObjCName is not applicable on overrides")
+        put(ErrorsNative.INVALID_OBJC_NAME, "@ObjCName should have a name and/or swiftName")
+        put(ErrorsNative.INVALID_CHARACTERS_OBJC_NAME, "@ObjCName contains illegal characters: \"{0}\"", CommonRenderers.STRING)
+        put(ErrorsNative.INCOMPATIBLE_OBJC_NAME_OVERRIDE, "Member inherits inconsistent @ObjCName")
     }
 }
 
