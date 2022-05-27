@@ -115,16 +115,16 @@ internal open class ObjCExportNameTranslatorImpl(
 
     override fun getClassOrProtocolName(ktClassOrObject: KtClassOrObject): ObjCExportNamer.ClassOrProtocolName =
             ObjCExportNamer.ClassOrProtocolName(
-                    swiftName = getClassOrProtocolName(ktClassOrObject, true),
+                    swiftName = getClassOrProtocolAsSwiftName(ktClassOrObject, true),
                     objCName = buildString {
                         append(configuration.topLevelNamePrefix)
-                        getClassOrProtocolName(ktClassOrObject, false).split('.').forEachIndexed { index, part ->
+                        getClassOrProtocolAsSwiftName(ktClassOrObject, false).split('.').forEachIndexed { index, part ->
                             append(if (index == 0) part else part.replaceFirstChar(Char::uppercaseChar))
                         }
                     }
             )
 
-    private fun getClassOrProtocolName(
+    private fun getClassOrProtocolAsSwiftName(
             ktClassOrObject: KtClassOrObject,
             forSwift: Boolean
     ): String = buildString {
@@ -143,7 +143,7 @@ internal open class ObjCExportNameTranslatorImpl(
     ) = helper.appendNameWithContainer(
             this,
             ktClassOrObject, ktClassOrObject.getObjCName(forSwift).toIdentifier(),
-            outerClass, getClassOrProtocolName(outerClass, forSwift),
+            outerClass, getClassOrProtocolAsSwiftName(outerClass, forSwift),
             object : ObjCExportNamingHelper.ClassInfoProvider<KtClassOrObject> {
                 override fun hasGenerics(clazz: KtClassOrObject): Boolean =
                         clazz.typeParametersWithOuter.count() != 0
