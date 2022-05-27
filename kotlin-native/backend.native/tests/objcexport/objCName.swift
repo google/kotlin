@@ -6,13 +6,13 @@ private func testObjCNameClassNames() throws {
 }
 
 private func testObjCNameFunctionName() throws {
-    try assertEquals(actual: ObjCNameA.with(userId: "abc"), expected: "abc")
+    try assertEquals(actual: ObjCNameAKt.with(userId: "abc"), expected: "abc")
 }
 
 private func testObjCNameParameterNames() throws {
-    try assertEquals(actual: ObjCNameA.supports(true), expected: true)
-    try assertEquals(actual: ObjCNameA.scanForPeripherals(withServices: 123, options: "abc"), expected: "123 abc")
-    try assertEquals(actual: ObjCNameA.registerForConnectionEvents(options: "abc"), expected: "abc")
+    try assertEquals(actual: ObjCNameAKt.supports(true), expected: true)
+    try assertEquals(actual: ObjCNameAKt.scanForPeripherals(withServices: 123, options: "abc"), expected: "123 abc")
+    try assertEquals(actual: ObjCNameAKt.registerForConnectionEvents(options: "abc"), expected: "abc")
 }
 
 private func testObjCNameMySwiftArray() throws {

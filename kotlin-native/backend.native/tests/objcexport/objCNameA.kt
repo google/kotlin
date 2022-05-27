@@ -4,7 +4,6 @@
  */
 
 @file:OptIn(ExperimentalObjCName::class)
-@file:ObjCName("ObjCNameA")
 
 package objCNameA
 

@@ -1105,8 +1105,8 @@ __attribute__((swift_name("ObjCNameC1A")))
 @end;
 
 __attribute__((objc_subclassing_restricted))
-__attribute__((swift_name("ObjCNameA")))
-@interface KtObjCNameA : KtBase
+__attribute__((swift_name("ObjCNameAKt")))
+@interface KtObjCNameAKt : KtBase
 + (NSString *)withUserId:(NSString *)userId __attribute__((swift_name("with(userId:)")));
 + (BOOL)supportsFeatures:(BOOL)features __attribute__((swift_name("supports(_:)")));
 + (NSString *)scanForPeripheralsWithServices:(int32_t)serviceUUIDs options:(NSString *)options __attribute__((swift_name("scanForPeripherals(withServices:options:)")));

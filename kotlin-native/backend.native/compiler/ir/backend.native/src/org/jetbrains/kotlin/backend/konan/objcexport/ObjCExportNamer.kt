@@ -163,18 +163,18 @@ private class ObjCExportNamingHelper(
         private val objcGenerics: Boolean
 ) {
 
-    fun translateFileName(file: KtFile): String = file.getObjCName(false).toIdentifier()
+    fun translateFileName(fileName: String): String =
+            PackagePartClassUtils.getFilePartShortName(fileName).toIdentifier()
+
+    fun translateFileName(file: KtFile): String = translateFileName(file.name)
 
     fun getFileClassName(fileName: String): ObjCExportNamer.ClassOrProtocolName {
-        val baseName = PackagePartClassUtils.getFilePartShortName(fileName).toIdentifier()
+        val baseName = translateFileName(fileName)
         return ObjCExportNamer.ClassOrProtocolName(swiftName = baseName, objCName = "$topLevelNamePrefix$baseName")
     }
 
     fun getFileClassName(file: KtFile): ObjCExportNamer.ClassOrProtocolName =
-            ObjCExportNamer.ClassOrProtocolName(
-                    swiftName = file.getObjCName(true).toIdentifier(),
-                    objCName = "$topLevelNamePrefix${file.getObjCName(false).toIdentifier()}"
-            )
+            getFileClassName(file.name)
 
     fun <T> appendNameWithContainer(
             builder: StringBuilder,
@@ -379,14 +379,15 @@ internal class ObjCExportNamerImpl(
 
     override fun getFileClassName(file: SourceFile): ObjCExportNamer.ClassOrProtocolName {
         val candidate by lazy {
-            when (file) {
+            val fileName = when (file) {
                 is PsiSourceFile -> {
                     val psiFile = file.psiFile
                     val ktFile = psiFile as? KtFile ?: error("PsiFile '$psiFile' is not KtFile")
-                    helper.getFileClassName(ktFile)
+                    ktFile.name
                 }
-                else -> file.name?.let(helper::getFileClassName) ?: error("$file has no name")
+                else -> file.name ?: error("$file has no name")
             }
+            helper.getFileClassName(fileName)
         }
 
         val objCName = objCClassNames.getOrPut(file) {
@@ -954,9 +955,6 @@ private fun List<KtAnnotationEntry>.getObjCName(forSwift: Boolean): String? = fi
         false -> getName(0, "name")
     }
 }
-
-private fun KtFile.getObjCName(forSwift: Boolean): String =
-        annotationEntries.getObjCName(forSwift) ?: PackagePartClassUtils.getFilePartShortName(name)
 
 private fun KtClassOrObject.getObjCName(forSwift: Boolean): String =
         annotationEntries.getObjCName(forSwift) ?: name!!

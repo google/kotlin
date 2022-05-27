@@ -28,14 +28,13 @@ public expect annotation class CName(val externName: String = "", val shortName:
 public expect annotation class ExperimentalObjCName()
 
 /**
- * Instructs the Kotlin compiler to use a custom Objective-C and/or Swift name for this class, property, parameter, function or file.
+ * Instructs the Kotlin compiler to use a custom Objective-C and/or Swift name for this class, property, parameter or function.
  */
 @Target(
     AnnotationTarget.CLASS,
     AnnotationTarget.PROPERTY,
     AnnotationTarget.VALUE_PARAMETER,
-    AnnotationTarget.FUNCTION,
-    AnnotationTarget.FILE
+    AnnotationTarget.FUNCTION
 )
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
