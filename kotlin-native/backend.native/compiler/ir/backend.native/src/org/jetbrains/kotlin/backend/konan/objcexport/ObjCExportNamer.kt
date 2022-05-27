@@ -475,7 +475,10 @@ internal class ObjCExportNamerImpl(
             parameters.forEachIndexed { index, (bridge, it) ->
                 val name = when (bridge) {
                     is MethodBridgeValueParameter.Mapped -> when {
-                        it is ReceiverParameterDescriptor -> ""
+                        it is ReceiverParameterDescriptor -> when (val name = it.getObjCName(false, "")) {
+                            "" -> name
+                            else -> name.toIdentifier()
+                        }
                         method is PropertySetterDescriptor -> when (parameters.size) {
                             1 -> ""
                             else -> "value"
@@ -525,7 +528,10 @@ internal class ObjCExportNamerImpl(
             parameters@ for ((bridge, it) in parameters) {
                 val label = when (bridge) {
                     is MethodBridgeValueParameter.Mapped -> when {
-                        it is ReceiverParameterDescriptor -> "_"
+                        it is ReceiverParameterDescriptor -> when (val name = it.getObjCName(true, "_")) {
+                            "_" -> name
+                            else -> name.toIdentifier()
+                        }
                         method is PropertySetterDescriptor -> when (parameters.size) {
                             1 -> "_"
                             else -> "value"
@@ -923,17 +929,18 @@ private fun ObjCExportMapper.canHaveSameName(first: PropertyDescriptor, second: 
     return bridgePropertyType(first) == bridgePropertyType(second)
 }
 
-private fun DeclarationDescriptor.getObjCName(forSwift: Boolean): String {
+private fun DeclarationDescriptor.getObjCName(forSwift: Boolean, default: String? = null): String {
     annotations.findAnnotation(KonanFqNames.objCName)?.let { annotation ->
         fun getName(param: String) = annotation.argumentValue(param)?.value?.cast<String>()?.takeIf(Name::isValidIdentifier)
         if (forSwift) getName("swiftName")?.let { return it }
         getName("name")?.let { return it }
     }
-    return name.asString()
+    return default ?: name.asString()
 }
 
-private fun CallableDescriptor.getObjCName(forSwift: Boolean): String =
-        overriddenDescriptors.firstOrNull()?.getObjCName(forSwift) ?: (this as DeclarationDescriptor).getObjCName(forSwift)
+private fun CallableDescriptor.getObjCName(forSwift: Boolean, default: String? = null): String =
+        overriddenDescriptors.firstOrNull()?.getObjCName(forSwift, default)
+                ?: (this as DeclarationDescriptor).getObjCName(forSwift, default)
 
 private val objCNameShortName = KonanFqNames.objCName.shortName().asString()
 

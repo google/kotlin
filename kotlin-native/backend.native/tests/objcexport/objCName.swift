@@ -15,6 +15,11 @@ private func testObjCNameParameterNames() throws {
     try assertEquals(actual: ObjCNameAKt.registerForConnectionEvents(options: "abc"), expected: "abc")
 }
 
+private func testObjCNameReceiverName() throws {
+    let object = ObjCNameC2()
+    try assertEquals(actual: ObjCNameBKt.getSomeValue(of: object), expected: 0)
+}
+
 private func testObjCNameMySwiftArray() throws {
     let array = MySwiftArray()
     try assertEquals(actual: array.count, expected: 0)
@@ -35,6 +40,7 @@ class ObjCNameTests : SimpleTestProvider {
         test("TestObjCNameClassNames", testObjCNameClassNames)
         test("TestObjCNameFunctionName", testObjCNameFunctionName)
         test("TestObjCNameParameterNames", testObjCNameParameterNames)
+        test("TestObjCNameReceiverName", testObjCNameReceiverName)
         test("TestObjCNameMySwiftArray", testObjCNameMySwiftArray)
         test("TestObjCNameOverrides", testObjCNameOverrides)
     }

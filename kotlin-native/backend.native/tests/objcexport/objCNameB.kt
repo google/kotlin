@@ -28,6 +28,8 @@ interface ObjCNameI1 {
     val someValue: Int
 }
 
+fun @receiver:ObjCName("of") ObjCNameI1.getSomeValue(): Int = someValue
+
 class ObjCNameC2: ObjCNameI1 {
     override var someValue: Int = 0
 }

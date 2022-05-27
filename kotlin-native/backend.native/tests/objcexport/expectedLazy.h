@@ -1202,6 +1202,12 @@ __attribute__((swift_name("ObjCNameC2")))
 @property int32_t someOtherValue __attribute__((swift_name("someOtherValue")));
 @end;
 
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("ObjCNameBKt")))
+@interface KtObjCNameBKt : KtBase
++ (int32_t)getSomeValueOf:(id<KtObjCNameI1>)receiver __attribute__((swift_name("getSomeValue(of:)")));
+@end;
+
 __attribute__((swift_name("OverrideKotlinMethods2")))
 @protocol KtOverrideKotlinMethods2
 @required
