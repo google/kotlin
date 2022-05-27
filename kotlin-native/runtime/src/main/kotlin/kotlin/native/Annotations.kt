@@ -84,6 +84,15 @@ public annotation class EagerInitialization
 public actual annotation class CName(actual val externName: String = "", actual val shortName: String = "")
 
 /**
+ * This annotation marks the experimental [ObjCName] annotation.
+ */
+@RequiresOptIn
+@Target(AnnotationTarget.ANNOTATION_CLASS)
+@Retention(AnnotationRetention.BINARY)
+@MustBeDocumented
+public actual annotation class ExperimentalObjCName
+
+/**
  * Instructs the Kotlin compiler to use a custom Objective-C and/or Swift name for this class, property, parameter, function or file.
  */
 @Target(
@@ -95,4 +104,5 @@ public actual annotation class CName(actual val externName: String = "", actual 
 )
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
+@ExperimentalObjCName
 public actual annotation class ObjCName(actual val name: String = "", actual val swiftName: String = "")
