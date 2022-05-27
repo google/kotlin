@@ -564,21 +564,16 @@ internal class ObjCExportNamerImpl(
     override fun getPropertyName(property: PropertyDescriptor): ObjCExportNamer.PropertyName {
         assert(mapper.isBaseProperty(property))
         assert(mapper.isObjCProperty(property))
+        fun PropertyNameMapping.getOrPut(property: PropertyDescriptor, forSwift: Boolean) = getOrPut(property) {
+            StringBuilder().apply {
+                append(property.getObjCName(forSwift).toIdentifier())
+            }.mangledSequence {
+                append('_')
+            }
+        }
         return ObjCExportNamer.PropertyName(
-                swiftName = swiftPropertyNames.getOrPut(property) {
-                    StringBuilder().apply {
-                        append(property.getObjCName(true).toIdentifier())
-                    }.mangledSequence {
-                        append('_')
-                    }
-                },
-                objCName = objCPropertyNames.getOrPut(property) {
-                    StringBuilder().apply {
-                        append(property.getObjCName(false).toIdentifier())
-                    }.mangledSequence {
-                        append('_')
-                    }
-                }
+                swiftName = swiftPropertyNames.getOrPut(property, true),
+                objCName = objCPropertyNames.getOrPut(property, false)
         )
     }
 
