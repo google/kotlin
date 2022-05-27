@@ -940,7 +940,7 @@ private fun List<KtAnnotationEntry>.getObjCName(forSwift: Boolean): String? = fi
 }?.let { annotation ->
     fun getName(index: Int, name: String): String? {
         val valueArgument = annotation.valueArguments.run {
-            firstOrNull { it.getArgumentName()?.asName?.asString() == name } ?: getOrNull(index)
+            firstOrNull { it.getArgumentName()?.asName?.asString() == name } ?: getOrNull(index)?.takeIf { it.getArgumentName() == null }
         } ?: return null
         val stringTemplateExpression = when (valueArgument) {
             is KtValueArgument -> valueArgument.stringTemplateExpression

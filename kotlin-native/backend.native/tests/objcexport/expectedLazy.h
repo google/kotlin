@@ -1191,15 +1191,25 @@ __attribute__((swift_name("MySwiftArray")))
 __attribute__((swift_name("ObjCNameI1")))
 @protocol KtObjCNameI1
 @required
+- (int32_t)someOtherFunctionReceiver:(int32_t)receiver otherParam:(int32_t)param __attribute__((swift_name("someOtherFunction(receiver:otherParam:)")));
 @property (readonly) int32_t someOtherValue __attribute__((swift_name("someOtherValue")));
 @end;
 
 __attribute__((objc_subclassing_restricted))
-__attribute__((swift_name("ObjCNameC2")))
+__attribute__((swift_name("SwiftNameC2")))
 @interface KtObjCNameC2 : KtBase <KtObjCNameI1>
 - (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
 + (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+- (int32_t)someOtherFunctionReceiver:(int32_t)receiver otherParam:(int32_t)param __attribute__((swift_name("someOtherFunction(receiver:otherParam:)")));
 @property int32_t someOtherValue __attribute__((swift_name("someOtherValue")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("SwiftNameC2.SwiftNestedClass")))
+@interface KtObjCNameC2ObjCNestedClass : KtBase
+- (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
++ (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+@property int32_t nestedValue __attribute__((swift_name("nestedValue")));
 @end;
 
 __attribute__((objc_subclassing_restricted))

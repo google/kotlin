@@ -26,10 +26,19 @@ class MyKotlinArray {
 interface ObjCNameI1 {
     @ObjCName("someOtherValue")
     val someValue: Int
+    @ObjCName("someOtherFunction")
+    fun @receiver:ObjCName("receiver") Int.someFunction(@ObjCName("otherParam") param: Int): Int
 }
 
 fun @receiver:ObjCName("of") ObjCNameI1.getSomeValue(): Int = someValue
 
+@ObjCName(swiftName = "SwiftNameC2")
 class ObjCNameC2: ObjCNameI1 {
+    @ObjCName("ObjCNestedClass", "SwiftNestedClass")
+    class NestedClass {
+        var nestedValue: Int = 1
+    }
+
     override var someValue: Int = 0
+    override fun Int.someFunction(param: Int): Int = this * param
 }

@@ -16,7 +16,7 @@ private func testObjCNameParameterNames() throws {
 }
 
 private func testObjCNameReceiverName() throws {
-    let object = ObjCNameC2()
+    let object = SwiftNameC2()
     try assertEquals(actual: ObjCNameBKt.getSomeValue(of: object), expected: 0)
 }
 
@@ -27,10 +27,18 @@ private func testObjCNameMySwiftArray() throws {
 }
 
 private func testObjCNameOverrides() throws {
-    let object = ObjCNameC2()
+    let object = SwiftNameC2()
     try assertEquals(actual: object.someOtherValue, expected: 0)
     object.someOtherValue = 1
     try assertEquals(actual: object.someOtherValue, expected: 1)
+    try assertEquals(actual: object.someOtherFunction(receiver: 2, otherParam: 4), expected: 8)
+}
+
+private func testObjCNameNestedClass() throws {
+    let object = SwiftNameC2.SwiftNestedClass()
+    try assertEquals(actual: object.nestedValue, expected: 1)
+    object.nestedValue = 2
+    try assertEquals(actual: object.nestedValue, expected: 2)
 }
 
 class ObjCNameTests : SimpleTestProvider {
@@ -43,5 +51,6 @@ class ObjCNameTests : SimpleTestProvider {
         test("TestObjCNameReceiverName", testObjCNameReceiverName)
         test("TestObjCNameMySwiftArray", testObjCNameMySwiftArray)
         test("TestObjCNameOverrides", testObjCNameOverrides)
+        test("TestObjCNameNestedClass", testObjCNameNestedClass)
     }
 }
