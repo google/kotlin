@@ -327,19 +327,15 @@ internal class ObjCExportNamerImpl(
         // Note: this condition is correct but can be too strict.
     }
 
-    private val objCPropertyNames = object : Mapping<PropertyDescriptor, String>() {
+    private inner class PropertyNameMapping : Mapping<PropertyDescriptor, String>() {
         override fun reserved(name: String) = name in Reserved.propertyNames
 
         override fun conflict(first: PropertyDescriptor, second: PropertyDescriptor): Boolean =
                 !mapper.canHaveSameName(first, second)
     }
 
-    private val swiftPropertyNames = object : Mapping<PropertyDescriptor, String>() {
-        override fun reserved(name: String) = name in Reserved.propertyNames
-
-        override fun conflict(first: PropertyDescriptor, second: PropertyDescriptor): Boolean =
-                !mapper.canHaveSameName(first, second)
-    }
+    private val objCPropertyNames = PropertyNameMapping()
+    private val swiftPropertyNames = PropertyNameMapping()
 
     private open inner class GlobalNameMapping<in T : Any, N> : Mapping<T, N>() {
         final override fun conflict(first: T, second: T): Boolean = true
