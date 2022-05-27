@@ -409,7 +409,7 @@ internal class ObjCExportNamerImpl(
         StringBuilder().apply {
             val containingDeclaration = descriptor.containingDeclaration
             if (containingDeclaration is ClassDescriptor) {
-                appendNameWithContainer(descriptor, containingDeclaration)
+                appendSwiftNameWithContainer(descriptor, containingDeclaration)
             } else if (containingDeclaration is PackageFragmentDescriptor) {
                 appendTopLevelClassBaseName(descriptor, true)
             } else {
@@ -418,7 +418,7 @@ internal class ObjCExportNamerImpl(
         }.mangledBySuffixUnderscores()
     }
 
-    private fun StringBuilder.appendNameWithContainer(
+    private fun StringBuilder.appendSwiftNameWithContainer(
             clazz: ClassDescriptor,
             containingClass: ClassDescriptor
     ) = helper.appendNameWithContainer(
