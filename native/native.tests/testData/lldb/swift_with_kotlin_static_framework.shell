@@ -1,0 +1,16 @@
+// FILE: a.kt
+fun a() = "a"
+
+// FILE: b.kt
+fun b() = "b"
+
+// FILE: test.swift
+import AandBFramework
+
+print(AKt.a())
+print(BKt.b())
+
+// KONANC: -g -Xstatic-framework -produce framework a.kt b.kt -o AandBFramework.framework
+// SHELL: switfc test.swift -F .
+a
+b

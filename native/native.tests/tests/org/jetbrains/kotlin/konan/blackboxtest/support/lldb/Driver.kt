@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.konan.blackboxtest.support.lldb
 
 import kotlinx.coroutines.*
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.InputStream
 import java.io.StringReader
 import java.lang.Thread.sleep
@@ -105,9 +106,9 @@ data class ProcessOutput(
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-fun subprocess(program: Path, vararg args: String, action: (() -> Pair<Path, List<String>>)? = null): ProcessOutput {
+fun subprocess(program: Path, vararg args: String, workingDirectory: File? = null, action: (() -> Pair<Path, List<String>>)? = null): ProcessOutput {
     val start = System.currentTimeMillis()
-    val process = ProcessBuilder(program.toString(), *args).start()
+    val process = ProcessBuilder(program.toString(), *args).apply { workingDirectory?.let { directory(it) } }.start()
     val out = GlobalScope.async(Dispatchers.IO) {
         readStream(process, process.inputStream.buffered())
     }

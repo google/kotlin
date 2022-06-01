@@ -7,10 +7,7 @@ package org.jetbrains.kotlin.generators.tests
 
 import org.jetbrains.kotlin.generators.generateTestGroupSuiteWithJUnit5
 import org.jetbrains.kotlin.generators.model.annotation
-import org.jetbrains.kotlin.konan.blackboxtest.AbstractNativeBlackBoxTest
-import org.jetbrains.kotlin.konan.blackboxtest.AbstractNativeCodegenBoxTest
-import org.jetbrains.kotlin.konan.blackboxtest.AbstractNativeKlibABITest
-import org.jetbrains.kotlin.konan.blackboxtest.AbstractNativeLldbTest
+import org.jetbrains.kotlin.konan.blackboxtest.*
 import org.jetbrains.kotlin.konan.blackboxtest.support.group.UseExtTestCaseGroupProvider
 import org.jetbrains.kotlin.konan.blackboxtest.support.group.UseStandardTestCaseGroupProvider
 import org.jetbrains.kotlin.test.TargetBackend
@@ -60,6 +57,17 @@ fun main() {
                 model("lldb")
             }
         }
+
+        // LLDB complex tests
+        testGroup("native/native.tests/tests-gen", "native/native.tests/testData") {
+            testClass<AbstractNativeShellTest>(
+                suiteTestClassName = "lldbShellTestGenerated",
+                annotations = listOf(lldb(), provider<UseStandardTestCaseGroupProvider>())
+            ) {
+                model("lldb", extension = "shell")
+            }
+        }
+
     }
 }
 
