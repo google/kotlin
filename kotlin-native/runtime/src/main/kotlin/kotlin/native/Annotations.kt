@@ -104,4 +104,4 @@ public actual annotation class ExperimentalObjCName
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
 @ExperimentalObjCName
-public actual annotation class ObjCName(actual val name: String = "", actual val swiftName: String = "")
+public actual annotation class ObjCName(actual val name: String = "", actual val swiftName: String = "", actual val exact: Boolean = false)

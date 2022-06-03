@@ -9,7 +9,7 @@ package kotlin.native
 )
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
-public annotation class ObjCName(val name: String = "", val swiftName: String = "")
+public annotation class ObjCName(val name: String = "", val swiftName: String = "", val exact: Boolean = false)
 
 // FILE: test.kt
 @ObjCName("ObjCClass", "SwiftClass")

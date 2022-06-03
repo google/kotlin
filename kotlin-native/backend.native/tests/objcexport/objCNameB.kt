@@ -39,6 +39,19 @@ class ObjCNameC2: ObjCNameI1 {
         var nestedValue: Int = 1
     }
 
+    @ObjCName("ObjCExactNestedClass", "SwiftExactNestedClass", true)
+    class ExactNestedClass {
+        var nestedValue: Int = 1
+    }
+
     override var someValue: Int = 0
     override fun Int.someFunction(param: Int): Int = this * param
+}
+
+@ObjCName("ObjCNameC3", "SwiftNameC3", true)
+class ObjCNameC3 {
+    @ObjCName("ObjCNestedClass", "SwiftNestedClass")
+    class NestedClass {
+        var nestedValue: Int = 2
+    }
 }

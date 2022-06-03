@@ -41,6 +41,11 @@ private func testObjCNameNestedClass() throws {
     try assertEquals(actual: object.nestedValue, expected: 2)
 }
 
+private func testObjCNameExact() throws {
+    try assertEquals(actual: SwiftExactNestedClass().nestedValue, expected: 1)
+    try assertEquals(actual: SwiftNameC3.SwiftNestedClass().nestedValue, expected: 2)
+}
+
 class ObjCNameTests : SimpleTestProvider {
     override init() {
         super.init()
@@ -52,5 +57,6 @@ class ObjCNameTests : SimpleTestProvider {
         test("TestObjCNameMySwiftArray", testObjCNameMySwiftArray)
         test("TestObjCNameOverrides", testObjCNameOverrides)
         test("TestObjCNameNestedClass", testObjCNameNestedClass)
+        test("TestObjCNameExact", testObjCNameExact)
     }
 }

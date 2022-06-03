@@ -1155,6 +1155,29 @@ __attribute__((swift_name("SwiftNameC2.SwiftNestedClass")))
 @end;
 
 __attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("SwiftExactNestedClass")))
+@interface ObjCExactNestedClass : KtBase
+- (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
++ (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+@property int32_t nestedValue __attribute__((swift_name("nestedValue")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("SwiftNameC3")))
+@interface ObjCNameC3 : KtBase
+- (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
++ (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("SwiftNameC3.SwiftNestedClass")))
+@interface ObjCNameC3ObjCNestedClass : KtBase
+- (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
++ (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+@property int32_t nestedValue __attribute__((swift_name("nestedValue")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
 __attribute__((swift_name("ObjCNameBKt")))
 @interface KtObjCNameBKt : KtBase
 + (int32_t)getSomeValueOf:(id<KtObjCNameI1>)receiver __attribute__((swift_name("getSomeValue(of:)")));

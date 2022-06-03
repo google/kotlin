@@ -40,4 +40,4 @@ public expect annotation class ExperimentalObjCName()
 @MustBeDocumented
 @OptionalExpectation
 @ExperimentalObjCName
-public expect annotation class ObjCName(val name: String = "", val swiftName: String = "")
+public expect annotation class ObjCName(val name: String = "", val swiftName: String = "", val exact: Boolean = false)
