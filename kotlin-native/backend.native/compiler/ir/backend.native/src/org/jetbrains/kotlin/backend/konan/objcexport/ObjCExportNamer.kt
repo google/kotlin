@@ -457,7 +457,6 @@ internal class ObjCExportNamerImpl(
                     if (containingDeclaration is ClassDescriptor) {
                         append(getClassOrProtocolObjCName(containingDeclaration))
                                 .append(objCName.asIdentifier(false).replaceFirstChar(Char::uppercaseChar))
-
                     } else if (containingDeclaration is PackageFragmentDescriptor) {
                         append(topLevelNamePrefix).appendTopLevelClassBaseName(descriptor, objCName, false)
                     } else {
@@ -572,16 +571,17 @@ internal class ObjCExportNamerImpl(
     override fun getPropertyName(property: PropertyDescriptor): ObjCExportNamer.PropertyName {
         assert(mapper.isBaseProperty(property))
         assert(mapper.isObjCProperty(property))
-        fun PropertyNameMapping.getOrPut(property: PropertyDescriptor, forSwift: Boolean) = getOrPut(property) {
+        val objCName = property.getObjCName()
+        fun PropertyNameMapping.getOrPut(forSwift: Boolean) = getOrPut(property) {
             StringBuilder().apply {
-                append(property.getObjCName().asIdentifier(forSwift))
+                append(objCName.asIdentifier(forSwift))
             }.mangledSequence {
                 append('_')
             }
         }
         return ObjCExportNamer.PropertyName(
-                swiftName = swiftPropertyNames.getOrPut(property, true),
-                objCName = objCPropertyNames.getOrPut(property, false)
+                swiftName = swiftPropertyNames.getOrPut(true),
+                objCName = objCPropertyNames.getOrPut(false)
         )
     }
 
@@ -935,6 +935,8 @@ private class ObjCName(
         private val swiftName: String?,
         val isExact: Boolean
 ) {
+    // TODO: Prevent mangling when objCName or swiftName is provided
+
     fun asString(forSwift: Boolean): String = swiftName.takeIf { forSwift } ?: objCName ?: kotlinName
 
     fun asIdentifier(forSwift: Boolean, default: () -> String = kotlinName::toIdentifier): String =
@@ -962,8 +964,9 @@ private fun KtClassOrObject.getObjCName(): ObjCName {
     var objCName: String? = null
     var swiftName: String? = null
     var isExact = false
-
-    annotationEntries.firstOrNull { it.calleeExpression?.constructorReferenceExpression?.getReferencedName() == objCNameShortName }?.let { annotation ->
+    annotationEntries.firstOrNull {
+        it.calleeExpression?.constructorReferenceExpression?.getReferencedName() == objCNameShortName
+    }?.let { annotation ->
         fun ValueArgument.getStringValue(): String? {
             val stringTemplateExpression = when (this) {
                 is KtValueArgument -> stringTemplateExpression
