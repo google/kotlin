@@ -41,12 +41,16 @@ private val DIAGNOSTIC_FACTORY_TO_RENDERER by lazy {
         put(ErrorsNative.INVALID_CHARACTERS_NATIVE, "Name {0}", CommonRenderers.STRING)
         put(ErrorsNative.INAPPLICABLE_OBJC_NAME, "@ObjCName is not applicable on overrides")
         put(ErrorsNative.INVALID_OBJC_NAME, "@ObjCName should have a name and/or swiftName")
-        put(ErrorsNative.INVALID_CHARACTERS_OBJC_NAME, "@ObjCName contains illegal characters: \"{0}\"", CommonRenderers.STRING)
+        put(ErrorsNative.INVALID_OBJC_NAME_CHARS, "@ObjCName contains illegal characters: {0}", CommonRenderers.STRING)
+        put(
+            ErrorsNative.INVALID_OBJC_NAME_FIRST_CHAR, "@ObjCName contains illegal first characters: {0}",
+            CommonRenderers.STRING
+        )
         put(
             ErrorsNative.INCOMPATIBLE_OBJC_NAME_OVERRIDE, "Member inherits inconsistent @ObjCName from {0}",
             CommonRenderers.commaSeparated(Renderers.NAME)
         )
-        put(ErrorsNative.INAPPLICABLE_EXACT_OBJC_Name, "Exact @ObjCName is only applicable to classes, objects and interfaces")
+        put(ErrorsNative.INAPPLICABLE_EXACT_OBJC_NAME, "Exact @ObjCName is only applicable to classes, objects and interfaces")
     }
 }
 

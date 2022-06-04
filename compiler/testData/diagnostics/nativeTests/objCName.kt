@@ -35,11 +35,17 @@ class KotlinSubClass: KotlinClass() {
 <!INVALID_OBJC_NAME!>@ObjCName()<!>
 val invalidObjCName: Int = 0
 
-<!INVALID_CHARACTERS_OBJC_NAME!>@ObjCName("validName", "invalid.name")<!>
+<!INVALID_OBJC_NAME_CHARS!>@ObjCName("validName", "invalid.name")<!>
 val invalidCharactersObjCNameA: Int = 0
 
-<!INVALID_CHARACTERS_OBJC_NAME!>@ObjCName("invalid.name", "validName")<!>
+<!INVALID_OBJC_NAME_CHARS!>@ObjCName("invalid.name", "validName")<!>
 val invalidCharactersObjCNameB: Int = 0
+
+<!INVALID_OBJC_NAME_FIRST_CHAR!>@ObjCName("validName1", "1validName")<!>
+val invalidFirstCharacterObjCNameA: Int = 0
+
+<!INVALID_OBJC_NAME_FIRST_CHAR!>@ObjCName("1validName", "validName1")<!>
+val invalidFirstCharacterObjCNameB: Int = 0
 
 interface KotlinInterfaceA {
     @ObjCName("objCPropertyA", "swiftPropertyA")
@@ -124,10 +130,10 @@ class KotlinOverrideClass: KotlinInterfaceA, KotlinInterfaceB {
 
 @ObjCName("ObjCExactChecks", exact = true)
 class ExactChecks {
-    <!INAPPLICABLE_EXACT_OBJC_Name!>@ObjCName("objCProperty", exact = true)<!>
+    <!INAPPLICABLE_EXACT_OBJC_NAME!>@ObjCName("objCProperty", exact = true)<!>
     var property: Int = 0
-    <!INAPPLICABLE_EXACT_OBJC_Name!>@ObjCName("objCFunction", exact = true)<!>
-    fun <!INAPPLICABLE_EXACT_OBJC_Name!>@receiver:ObjCName("objCReceiver", exact = true)<!> Int.function(
-        <!INAPPLICABLE_EXACT_OBJC_Name!>@ObjCName("objCParam", exact = true)<!> param: Int
+    <!INAPPLICABLE_EXACT_OBJC_NAME!>@ObjCName("objCFunction", exact = true)<!>
+    fun <!INAPPLICABLE_EXACT_OBJC_NAME!>@receiver:ObjCName("objCReceiver", exact = true)<!> Int.function(
+        <!INAPPLICABLE_EXACT_OBJC_NAME!>@ObjCName("objCParam", exact = true)<!> param: Int
     ): Int = this * param
 }

@@ -38,6 +38,10 @@ object NativeObjCNameChecker : DeclarationChecker {
         objCNames.forEach { checkObjCName(it, declaration, descriptor, context) }
     }
 
+    // We only allow valid ObjC identifiers (even for Swift names)
+    private val validFirstChars = ('A'..'Z').toSet() + ('a'..'z').toSet() + '_'
+    private val validChars = validFirstChars + ('0'..'9').toSet()
+
     private fun checkObjCName(
         objCName: ObjCName,
         declaration: KtDeclaration,
@@ -48,16 +52,23 @@ object NativeObjCNameChecker : DeclarationChecker {
             val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(objCName.annotation) ?: declaration
             context.trace.report(ErrorsNative.INVALID_OBJC_NAME.on(reportLocation))
         }
-        val invalidNameChars = objCName.name?.toSet()?.intersect(NativeIdentifierChecker.invalidChars) ?: emptySet()
-        val invalidSwiftNameChars = objCName.swiftName?.toSet()?.intersect(NativeIdentifierChecker.invalidChars) ?: emptySet()
+        val invalidNameFirstChar = objCName.name?.firstOrNull()?.takeUnless(validFirstChars::contains)
+        val invalidSwiftNameFirstChar = objCName.swiftName?.firstOrNull()?.takeUnless(validFirstChars::contains)
+        val invalidFirstChars = setOfNotNull(invalidNameFirstChar, invalidSwiftNameFirstChar)
+        if (invalidFirstChars.isNotEmpty()) {
+            val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(objCName.annotation) ?: declaration
+            context.trace.report(ErrorsNative.INVALID_OBJC_NAME_FIRST_CHAR.on(reportLocation, invalidFirstChars.joinToString("")))
+        }
+        val invalidNameChars = objCName.name?.toSet()?.subtract(validChars) ?: emptySet()
+        val invalidSwiftNameChars = objCName.swiftName?.toSet()?.subtract(validChars) ?: emptySet()
         val invalidChars = invalidNameChars + invalidSwiftNameChars
         if (invalidChars.isNotEmpty()) {
             val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(objCName.annotation) ?: declaration
-            context.trace.report(ErrorsNative.INVALID_CHARACTERS_OBJC_NAME.on(reportLocation, invalidChars.joinToString("")))
+            context.trace.report(ErrorsNative.INVALID_OBJC_NAME_CHARS.on(reportLocation, invalidChars.joinToString("")))
         }
         if (objCName.exact && descriptor !is ClassDescriptor) {
             val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(objCName.annotation) ?: declaration
-            context.trace.report(ErrorsNative.INAPPLICABLE_EXACT_OBJC_Name.on(reportLocation))
+            context.trace.report(ErrorsNative.INAPPLICABLE_EXACT_OBJC_NAME.on(reportLocation))
         }
     }
 
