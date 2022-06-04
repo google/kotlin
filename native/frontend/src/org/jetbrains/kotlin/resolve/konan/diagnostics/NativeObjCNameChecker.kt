@@ -65,7 +65,8 @@ object NativeObjCNameChecker : DeclarationChecker {
         if (descriptor !is CallableMemberDescriptor || descriptor.overriddenDescriptors.isEmpty()) return
         val objCNames = descriptor.overriddenDescriptors.map { it.getFirstBaseDescriptor().getObjCNames() }
         if (!objCNames.allNamesEquals()) {
-            context.trace.report(ErrorsNative.INCOMPATIBLE_OBJC_NAME_OVERRIDE.on(declaration))
+            val containingDeclarations = descriptor.overriddenDescriptors.map { it.containingDeclaration }
+            context.trace.report(ErrorsNative.INCOMPATIBLE_OBJC_NAME_OVERRIDE.on(declaration, containingDeclarations))
         }
     }
 
