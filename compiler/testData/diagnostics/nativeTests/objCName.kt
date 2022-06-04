@@ -47,6 +47,9 @@ val invalidFirstCharacterObjCNameA: Int = 0
 <!INVALID_OBJC_NAME_FIRST_CHAR!>@ObjCName("1validName", "validName1")<!>
 val invalidFirstCharacterObjCNameB: Int = 0
 
+<!MISSING_EXACT_OBJC_NAME!>@ObjCName(swiftName = "SwiftMissingExactName", exact = true)<!>
+class MissingExactName
+
 interface KotlinInterfaceA {
     @ObjCName("objCPropertyA", "swiftPropertyA")
     var kotlinPropertyA: Int

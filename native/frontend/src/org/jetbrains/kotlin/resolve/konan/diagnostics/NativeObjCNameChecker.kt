@@ -74,6 +74,10 @@ object NativeObjCNameChecker : DeclarationChecker {
             val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(objCName.annotation) ?: declaration
             context.trace.report(ErrorsNative.INAPPLICABLE_EXACT_OBJC_NAME.on(reportLocation))
         }
+        if (objCName.exact && objCName.name == null) {
+            val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(objCName.annotation) ?: declaration
+            context.trace.report(ErrorsNative.MISSING_EXACT_OBJC_NAME.on(reportLocation))
+        }
     }
 
     private fun checkOverrides(declaration: KtDeclaration, descriptor: DeclarationDescriptor, context: DeclarationCheckerContext) {

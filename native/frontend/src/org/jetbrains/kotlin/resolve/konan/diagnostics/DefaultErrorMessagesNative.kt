@@ -52,6 +52,7 @@ private val DIAGNOSTIC_FACTORY_TO_RENDERER by lazy {
             CommonRenderers.commaSeparated(Renderers.NAME)
         )
         put(ErrorsNative.INAPPLICABLE_EXACT_OBJC_NAME, "Exact @ObjCName is only applicable to classes, objects and interfaces")
+        put(ErrorsNative.MISSING_EXACT_OBJC_NAME, "Exact @ObjCName is required to have an ObjC name")
     }
 }
 
