@@ -6,6 +6,30 @@ package
 @kotlin.native.ObjCName(name = "1validName", swiftName = "validName1") public val invalidFirstCharacterObjCNameB: kotlin.Int = 0
 @kotlin.native.ObjCName public val invalidObjCName: kotlin.Int = 0
 
+public open class Base {
+    public constructor Base()
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    @kotlin.native.ObjCName(name = "foo1") public open fun foo(): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+public open class Derived : Base, I {
+    public constructor Derived()
+    public open override /*2*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    @kotlin.native.ObjCName(name = "foo1") public open override /*2*/ /*fake_override*/ fun foo(): kotlin.Unit
+    public open override /*2*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*2*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+public open class Derived2 : Derived {
+    public constructor Derived2()
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ fun foo(): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
 @kotlin.native.ObjCName(exact = true, name = "ObjCExactChecks") public final class ExactChecks {
     public constructor ExactChecks()
     @kotlin.native.ObjCName(exact = true, name = "objCProperty") public final var property: kotlin.Int
@@ -13,6 +37,13 @@ package
     public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
     public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
     @kotlin.native.ObjCName(exact = true, name = "objCFunction") public final fun @receiver:kotlin.native.ObjCName(exact = true, name = "objCReceiver") kotlin.Int.function(/*0*/ @kotlin.native.ObjCName(exact = true, name = "objCParam") param: kotlin.Int): kotlin.Int
+}
+
+public interface I {
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    @kotlin.native.ObjCName(name = "foo2") public abstract fun foo(): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
 }
 
 @kotlin.native.ObjCName(name = "ObjCClass", swiftName = "SwiftClass") public open class KotlinClass {

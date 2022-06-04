@@ -45,7 +45,7 @@ object ErrorsNative {
     @JvmField
     val INVALID_OBJC_NAME_FIRST_CHAR = DiagnosticFactory1.create<KtElement, String>(Severity.ERROR)
     @JvmField
-    val INCOMPATIBLE_OBJC_NAME_OVERRIDE = DiagnosticFactory1.create<KtElement, Collection<DeclarationDescriptor>>(Severity.ERROR)
+    val INCOMPATIBLE_OBJC_NAME_OVERRIDE = DiagnosticFactory2.create<KtElement, DeclarationDescriptor, Collection<DeclarationDescriptor>>(Severity.ERROR)
     @JvmField
     val INAPPLICABLE_EXACT_OBJC_NAME = DiagnosticFactory0.create<KtElement>(Severity.ERROR)
 

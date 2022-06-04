@@ -137,3 +137,19 @@ class ExactChecks {
         <!INAPPLICABLE_EXACT_OBJC_NAME!>@ObjCName("objCParam", exact = true)<!> param: Int
     ): Int = this * param
 }
+
+open class Base {
+    @ObjCName("foo1")
+    open fun foo() {}
+}
+
+interface I {
+    @ObjCName("foo2")
+    fun foo()
+}
+
+<!INCOMPATIBLE_OBJC_NAME_OVERRIDE!>open class Derived : Base(), I<!>
+
+open class Derived2 : Derived() {
+    override fun foo() {}
+}

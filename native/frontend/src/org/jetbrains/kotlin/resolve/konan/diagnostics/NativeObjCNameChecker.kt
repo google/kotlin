@@ -13,9 +13,12 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
+import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.annotations.argumentValue
 import org.jetbrains.kotlin.resolve.checkers.DeclarationChecker
 import org.jetbrains.kotlin.resolve.checkers.DeclarationCheckerContext
+import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
+import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 
 object NativeObjCNameChecker : DeclarationChecker {
@@ -24,6 +27,7 @@ object NativeObjCNameChecker : DeclarationChecker {
     override fun check(declaration: KtDeclaration, descriptor: DeclarationDescriptor, context: DeclarationCheckerContext) {
         checkDeclaration(declaration, descriptor, context)
         checkOverrides(declaration, descriptor, context)
+        checkFakeOverrides(declaration, descriptor, context)
     }
 
     private fun checkDeclaration(declaration: KtDeclaration, descriptor: DeclarationDescriptor, context: DeclarationCheckerContext) {
@@ -77,8 +81,18 @@ object NativeObjCNameChecker : DeclarationChecker {
         val objCNames = descriptor.overriddenDescriptors.map { it.getFirstBaseDescriptor().getObjCNames() }
         if (!objCNames.allNamesEquals()) {
             val containingDeclarations = descriptor.overriddenDescriptors.map { it.containingDeclaration }
-            context.trace.report(ErrorsNative.INCOMPATIBLE_OBJC_NAME_OVERRIDE.on(declaration, containingDeclarations))
+            context.trace.report(ErrorsNative.INCOMPATIBLE_OBJC_NAME_OVERRIDE.on(declaration, descriptor, containingDeclarations))
         }
+    }
+
+    private fun checkFakeOverrides(declaration: KtDeclaration, descriptor: DeclarationDescriptor, context: DeclarationCheckerContext) {
+        if (descriptor !is ClassDescriptor) return
+        descriptor.defaultType.memberScope
+            .getContributedDescriptors(DescriptorKindFilter.ALL, MemberScope.Companion.ALL_NAME_FILTER)
+            .forEach {
+                if (it !is CallableMemberDescriptor || it.kind.isReal) return
+                checkOverrides(declaration, it, context)
+            }
     }
 
     private fun CallableMemberDescriptor.getFirstBaseDescriptor(): CallableMemberDescriptor =

@@ -47,7 +47,8 @@ private val DIAGNOSTIC_FACTORY_TO_RENDERER by lazy {
             CommonRenderers.STRING
         )
         put(
-            ErrorsNative.INCOMPATIBLE_OBJC_NAME_OVERRIDE, "Member inherits inconsistent @ObjCName from {0}",
+            ErrorsNative.INCOMPATIBLE_OBJC_NAME_OVERRIDE, "Member \"{0}\" inherits inconsistent @ObjCName from {1}",
+            Renderers.NAME,
             CommonRenderers.commaSeparated(Renderers.NAME)
         )
         put(ErrorsNative.INAPPLICABLE_EXACT_OBJC_NAME, "Exact @ObjCName is only applicable to classes, objects and interfaces")
