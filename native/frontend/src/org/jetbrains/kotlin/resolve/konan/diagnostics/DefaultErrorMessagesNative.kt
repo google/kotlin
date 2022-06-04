@@ -43,6 +43,7 @@ private val DIAGNOSTIC_FACTORY_TO_RENDERER by lazy {
         put(ErrorsNative.INVALID_OBJC_NAME, "@ObjCName should have a name and/or swiftName")
         put(ErrorsNative.INVALID_CHARACTERS_OBJC_NAME, "@ObjCName contains illegal characters: \"{0}\"", CommonRenderers.STRING)
         put(ErrorsNative.INCOMPATIBLE_OBJC_NAME_OVERRIDE, "Member inherits inconsistent @ObjCName")
+        put(ErrorsNative.INAPPLICABLE_EXACT_OBJC_Name, "Exact @ObjCName is only applicable to classes, objects and interfaces")
     }
 }
 

@@ -121,3 +121,13 @@ class KotlinOverrideClass: KotlinInterfaceA, KotlinInterfaceB {
     <!INCOMPATIBLE_OBJC_NAME_OVERRIDE!>override fun Int.kotlinFunctionD(kotlinParam: Int): Int = this + kotlinParam<!>
     <!INCOMPATIBLE_OBJC_NAME_OVERRIDE!>override fun Int.kotlinFunctionE(kotlinParam: Int): Int = this + kotlinParam<!>
 }
+
+@ObjCName("ObjCExactChecks", exact = true)
+class ExactChecks {
+    <!INAPPLICABLE_EXACT_OBJC_Name!>@ObjCName("objCProperty", exact = true)<!>
+    var property: Int = 0
+    <!INAPPLICABLE_EXACT_OBJC_Name!>@ObjCName("objCFunction", exact = true)<!>
+    fun <!INAPPLICABLE_EXACT_OBJC_Name!>@receiver:ObjCName("objCReceiver", exact = true)<!> Int.function(
+        <!INAPPLICABLE_EXACT_OBJC_Name!>@ObjCName("objCParam", exact = true)<!> param: Int
+    ): Int = this * param
+}

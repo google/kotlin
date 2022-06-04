@@ -4,6 +4,15 @@ package
 @kotlin.native.ObjCName(name = "invalid.name", swiftName = "validName") public val invalidCharactersObjCNameB: kotlin.Int = 0
 @kotlin.native.ObjCName public val invalidObjCName: kotlin.Int = 0
 
+@kotlin.native.ObjCName(exact = true, name = "ObjCExactChecks") public final class ExactChecks {
+    public constructor ExactChecks()
+    @kotlin.native.ObjCName(exact = true, name = "objCProperty") public final var property: kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+    @kotlin.native.ObjCName(exact = true, name = "objCFunction") public final fun @receiver:kotlin.native.ObjCName(exact = true, name = "objCReceiver") kotlin.Int.function(/*0*/ @kotlin.native.ObjCName(exact = true, name = "objCParam") param: kotlin.Int): kotlin.Int
+}
+
 @kotlin.native.ObjCName(name = "ObjCClass", swiftName = "SwiftClass") public open class KotlinClass {
     public constructor KotlinClass()
     @kotlin.native.ObjCName(name = "objCProperty") public open var kotlinProperty: kotlin.Int
@@ -79,7 +88,8 @@ package kotlin {
     package kotlin.native {
 
         @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.CLASS, AnnotationTarget.PROPERTY, AnnotationTarget.VALUE_PARAMETER, AnnotationTarget.FUNCTION}) @kotlin.annotation.Retention(value = AnnotationRetention.BINARY) @kotlin.annotation.MustBeDocumented public final annotation class ObjCName : kotlin.Annotation {
-            public constructor ObjCName(/*0*/ name: kotlin.String = ..., /*1*/ swiftName: kotlin.String = ...)
+            public constructor ObjCName(/*0*/ name: kotlin.String = ..., /*1*/ swiftName: kotlin.String = ..., /*2*/ exact: kotlin.Boolean = ...)
+            public final val exact: kotlin.Boolean
             public final val name: kotlin.String
             public final val swiftName: kotlin.String
             public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean

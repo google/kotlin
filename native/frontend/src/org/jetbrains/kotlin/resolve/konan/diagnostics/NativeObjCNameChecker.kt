@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.resolve.konan.diagnostics
 
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
@@ -34,10 +35,15 @@ object NativeObjCNameChecker : DeclarationChecker {
                 context.trace.report(ErrorsNative.INAPPLICABLE_OBJC_NAME.on(reportLocation))
             }
         }
-        objCNames.forEach { checkObjCName(it, declaration, context) }
+        objCNames.forEach { checkObjCName(it, declaration, descriptor, context) }
     }
 
-    private fun checkObjCName(objCName: ObjCName, declaration: KtDeclaration, context: DeclarationCheckerContext) {
+    private fun checkObjCName(
+        objCName: ObjCName,
+        declaration: KtDeclaration,
+        descriptor: DeclarationDescriptor,
+        context: DeclarationCheckerContext
+    ) {
         if (objCName.name == null && objCName.swiftName == null) {
             val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(objCName.annotation) ?: declaration
             context.trace.report(ErrorsNative.INVALID_OBJC_NAME.on(reportLocation))
@@ -48,6 +54,10 @@ object NativeObjCNameChecker : DeclarationChecker {
         if (invalidChars.isNotEmpty()) {
             val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(objCName.annotation) ?: declaration
             context.trace.report(ErrorsNative.INVALID_CHARACTERS_OBJC_NAME.on(reportLocation, invalidChars.joinToString("")))
+        }
+        if (objCName.exact && descriptor !is ClassDescriptor) {
+            val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(objCName.annotation) ?: declaration
+            context.trace.report(ErrorsNative.INAPPLICABLE_EXACT_OBJC_Name.on(reportLocation))
         }
     }
 
@@ -67,6 +77,17 @@ object NativeObjCNameChecker : DeclarationChecker {
     ) {
         val name: String? = annotation.argumentValue("name")?.value?.cast<String>()?.takeIf { it.isNotBlank() }
         val swiftName: String? = annotation.argumentValue("swiftName")?.value?.cast<String>()?.takeIf { it.isNotBlank() }
+        val exact: Boolean = annotation.argumentValue("exact")?.value?.cast() ?: false
+
+        override fun equals(other: Any?): Boolean =
+            other is ObjCName && name == other.name && swiftName == other.swiftName && exact == other.exact
+
+        override fun hashCode(): Int {
+            var result = name?.hashCode() ?: 0
+            result = 31 * result + (swiftName?.hashCode() ?: 0)
+            result = 31 * result + exact.hashCode()
+            return result
+        }
     }
 
     private fun DeclarationDescriptor.getObjCName(): ObjCName? = annotations.findAnnotation(objCNameFqName)?.let(::ObjCName)
@@ -80,15 +101,13 @@ object NativeObjCNameChecker : DeclarationChecker {
         else -> listOf(getObjCName())
     }
 
-    private fun ObjCName?.nameEquals(other: ObjCName?): Boolean = this?.name == other?.name && this?.swiftName == other?.swiftName
-
     private fun List<List<ObjCName?>>.allNamesEquals(): Boolean {
         val first = this[0]
         for (i in 1 until size) {
             val current = this[i]
             if (first.size != current.size) return false
             for (ii in first.indices) {
-                if (!first[ii].nameEquals(current[ii])) return false
+                if (first[ii] != current[ii]) return false
             }
         }
         return true

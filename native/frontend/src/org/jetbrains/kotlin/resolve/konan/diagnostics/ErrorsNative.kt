@@ -44,6 +44,8 @@ object ErrorsNative {
     val INVALID_CHARACTERS_OBJC_NAME = DiagnosticFactory1.create<KtElement, String>(Severity.ERROR)
     @JvmField
     val INCOMPATIBLE_OBJC_NAME_OVERRIDE = DiagnosticFactory0.create<KtElement>(Severity.ERROR)
+    @JvmField
+    val INAPPLICABLE_EXACT_OBJC_Name = DiagnosticFactory0.create<KtElement>(Severity.ERROR)
 
     init {
         Errors.Initializer.initializeFactoryNames(ErrorsNative::class.java)
