@@ -958,6 +958,20 @@ private fun DeclarationDescriptor.getObjCName(): ObjCName {
 private fun CallableDescriptor.getObjCName(): ObjCName =
         overriddenDescriptors.firstOrNull()?.getObjCName() ?: (this as DeclarationDescriptor).getObjCName()
 
+private fun ParameterDescriptor.getObjCName(): ObjCName {
+    val callableDescriptor = containingDeclaration as? CallableDescriptor ?: return (this as CallableDescriptor).getObjCName()
+    fun CallableDescriptor.getBase(): CallableDescriptor = overriddenDescriptors.firstOrNull()?.getBase() ?: this
+    val baseCallableDescriptor = callableDescriptor.getBase()
+    if (callableDescriptor.extensionReceiverParameter == this) {
+        return (baseCallableDescriptor.extensionReceiverParameter as CallableDescriptor).getObjCName()
+    }
+    val parameterIndex = callableDescriptor.valueParameters.indexOf(this)
+    if (parameterIndex != -1) {
+        return (baseCallableDescriptor.valueParameters[parameterIndex] as CallableDescriptor).getObjCName()
+    }
+    error("Unsupported ObjCName annotated parameter $this")
+}
+
 private val objCNameShortName = KonanFqNames.objCName.shortName().asString()
 
 private fun KtClassOrObject.getObjCName(): ObjCName {

@@ -55,3 +55,11 @@ class ObjCNameC3 {
         var nestedValue: Int = 2
     }
 }
+
+private interface ObjCNameI2 {
+    fun @receiver:ObjCName("objCReceiver") Int.foo(@ObjCName("objCParam") param: Int): Int
+}
+
+class ObjCNameC4: ObjCNameI2 {
+    override fun Int.foo(param: Int): Int = this * param
+}

@@ -1236,6 +1236,14 @@ __attribute__((swift_name("SwiftNameC3.SwiftNestedClass")))
 @end;
 
 __attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("ObjCNameC4")))
+@interface KtObjCNameC4 : KtBase
+- (instancetype)init __attribute__((swift_name("init()"))) __attribute__((objc_designated_initializer));
++ (instancetype)new __attribute__((availability(swift, unavailable, message="use object initializers instead")));
+- (int32_t)fooObjCReceiver:(int32_t)receiver objCParam:(int32_t)param __attribute__((swift_name("foo(objCReceiver:objCParam:)")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
 __attribute__((swift_name("ObjCNameBKt")))
 @interface KtObjCNameBKt : KtBase
 + (int32_t)getSomeValueOf:(id<KtObjCNameI1>)receiver __attribute__((swift_name("getSomeValue(of:)")));
