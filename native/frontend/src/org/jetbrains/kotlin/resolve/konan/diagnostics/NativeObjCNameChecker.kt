@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
-import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.annotations.argumentValue
 import org.jetbrains.kotlin.resolve.checkers.DeclarationChecker
 import org.jetbrains.kotlin.resolve.checkers.DeclarationCheckerContext
@@ -94,7 +93,7 @@ object NativeObjCNameChecker : DeclarationChecker {
         descriptor.defaultType.memberScope
             .getContributedDescriptors(DescriptorKindFilter.ALL, MemberScope.Companion.ALL_NAME_FILTER)
             .forEach {
-                if (it !is CallableMemberDescriptor || it.kind.isReal) return
+                if (it !is CallableMemberDescriptor || it.kind.isReal) return@forEach
                 checkOverrides(declaration, it, context)
             }
     }
@@ -113,8 +112,8 @@ object NativeObjCNameChecker : DeclarationChecker {
             other is ObjCName && name == other.name && swiftName == other.swiftName && exact == other.exact
 
         override fun hashCode(): Int {
-            var result = name?.hashCode() ?: 0
-            result = 31 * result + (swiftName?.hashCode() ?: 0)
+            var result = name.hashCode()
+            result = 31 * result + swiftName.hashCode()
             result = 31 * result + exact.hashCode()
             return result
         }
