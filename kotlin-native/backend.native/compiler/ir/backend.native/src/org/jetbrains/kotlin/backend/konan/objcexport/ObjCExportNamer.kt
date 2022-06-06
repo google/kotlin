@@ -969,7 +969,7 @@ private fun ParameterDescriptor.getObjCName(): ObjCName {
     if (parameterIndex != -1) {
         return (baseCallableDescriptor.valueParameters[parameterIndex] as CallableDescriptor).getObjCName()
     }
-    error("Unsupported ObjCName annotated parameter $this")
+    error("Unexpected parameter: $this")
 }
 
 private val objCNameShortName = KonanFqNames.objCName.shortName().asString()
