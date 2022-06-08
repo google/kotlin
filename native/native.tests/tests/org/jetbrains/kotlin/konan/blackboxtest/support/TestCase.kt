@@ -179,7 +179,7 @@ internal class TestCase(
 
     init {
         when (kind) {
-            TestKind.STANDALONE_NO_TR -> assertTrue(extras is NoTestRunnerExtras)
+            TestKind.STANDALONE_NO_TR, TestKind.LLDB -> assertTrue(extras is NoTestRunnerExtras)
             TestKind.REGULAR, TestKind.STANDALONE -> assertTrue(extras is WithTestRunnerExtras)
         }
     }

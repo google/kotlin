@@ -103,6 +103,12 @@ internal class TestRunProvider(
         fun createTestRun(testRunName: String, testName: TestName?) = createTestRun(testCase, executable, testRunName, testName)
 
         when (testCase.kind) {
+            TestKind.LLDB -> {
+                debug()
+                val testRunName = testCase.extras<NoTestRunnerExtras>().entryPoint.substringAfterLast('.')
+                val testRun = createTestRun(testRunName, testName = null)
+                TreeNode.oneLevel(testRun)
+            }
             TestKind.STANDALONE_NO_TR -> {
                 val testRunName = testCase.extras<NoTestRunnerExtras>().entryPoint.substringAfterLast('.')
                 val testRun = createTestRun(testRunName, testName = null)
@@ -130,7 +136,7 @@ internal class TestRunProvider(
         val testCase = testCaseGroup.getByName(testCaseId) ?: fail { "No test case for $testCaseId" }
 
         val testCompilation = when (testCase.kind) {
-            TestKind.STANDALONE, TestKind.STANDALONE_NO_TR -> {
+            TestKind.STANDALONE, TestKind.STANDALONE_NO_TR, TestKind.LLDB -> {
                 // Create a separate compilation for each standalone test case.
                 cachedCompilations.computeIfAbsent(
                     TestCompilationCacheKey.Standalone(testCaseId)

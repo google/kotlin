@@ -127,7 +127,8 @@ internal object TestDirectives : SimpleDirectivesContainer() {
 internal enum class TestKind {
     REGULAR,
     STANDALONE,
-    STANDALONE_NO_TR;
+    STANDALONE_NO_TR,
+    LLDB;
 }
 
 internal enum class TestRunnerType {

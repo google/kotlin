@@ -1,0 +1,18 @@
+// FILE: main.kt
+fun main(args: Array<String>) {
+    val xs = intArrayOf(3, 5, 8)
+    return
+}
+
+data class Point(val x: Int, val y: Int)
+
+// KONANC: -g main.kt
+// FILE: session.lldb
+b main.kt:3
+r
+fr var xs
+q
+// SHELL: lldb program.kexe --source session.lldb
+[..]
+(ObjHeader *) xs = [..., ..., ...]
+[..]
