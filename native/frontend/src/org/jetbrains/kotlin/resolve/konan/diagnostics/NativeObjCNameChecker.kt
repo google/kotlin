@@ -51,30 +51,26 @@ object NativeObjCNameChecker : DeclarationChecker {
         descriptor: DeclarationDescriptor,
         context: DeclarationCheckerContext
     ) {
+        val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(objCName.annotation) ?: declaration
         if (objCName.name == null && objCName.swiftName == null) {
-            val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(objCName.annotation) ?: declaration
             context.trace.report(ErrorsNative.INVALID_OBJC_NAME.on(reportLocation))
         }
         val invalidNameFirstChar = objCName.name?.firstOrNull()?.takeUnless(validFirstChars::contains)
         val invalidSwiftNameFirstChar = objCName.swiftName?.firstOrNull()?.takeUnless(validFirstChars::contains)
         val invalidFirstChars = setOfNotNull(invalidNameFirstChar, invalidSwiftNameFirstChar)
         if (invalidFirstChars.isNotEmpty()) {
-            val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(objCName.annotation) ?: declaration
             context.trace.report(ErrorsNative.INVALID_OBJC_NAME_FIRST_CHAR.on(reportLocation, invalidFirstChars.joinToString("")))
         }
         val invalidNameChars = objCName.name?.toSet()?.subtract(validChars) ?: emptySet()
         val invalidSwiftNameChars = objCName.swiftName?.toSet()?.subtract(validChars) ?: emptySet()
         val invalidChars = invalidNameChars + invalidSwiftNameChars
         if (invalidChars.isNotEmpty()) {
-            val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(objCName.annotation) ?: declaration
             context.trace.report(ErrorsNative.INVALID_OBJC_NAME_CHARS.on(reportLocation, invalidChars.joinToString("")))
         }
         if (objCName.exact && descriptor !is ClassDescriptor) {
-            val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(objCName.annotation) ?: declaration
             context.trace.report(ErrorsNative.INAPPLICABLE_EXACT_OBJC_NAME.on(reportLocation))
         }
         if (objCName.exact && objCName.name == null) {
-            val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(objCName.annotation) ?: declaration
             context.trace.report(ErrorsNative.MISSING_EXACT_OBJC_NAME.on(reportLocation))
         }
     }
@@ -133,11 +129,7 @@ object NativeObjCNameChecker : DeclarationChecker {
     private fun List<List<ObjCName?>>.allNamesEquals(): Boolean {
         val first = this[0]
         for (i in 1 until size) {
-            val current = this[i]
-            if (first.size != current.size) return false
-            for (ii in first.indices) {
-                if (first[ii] != current[ii]) return false
-            }
+            if (first != this[i]) return false
         }
         return true
     }
