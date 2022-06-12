@@ -5,10 +5,7 @@
 
 package org.jetbrains.kotlin.resolve.konan.diagnostics
 
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -67,7 +64,7 @@ object NativeObjCNameChecker : DeclarationChecker {
         if (invalidChars.isNotEmpty()) {
             context.trace.report(ErrorsNative.INVALID_OBJC_NAME_CHARS.on(reportLocation, invalidChars.joinToString("")))
         }
-        if (objCName.exact && descriptor !is ClassDescriptor) {
+        if (objCName.exact && (descriptor !is ClassDescriptor || descriptor.kind == ClassKind.ENUM_ENTRY)) {
             context.trace.report(ErrorsNative.INAPPLICABLE_EXACT_OBJC_NAME.on(reportLocation))
         }
         if (objCName.exact && objCName.name == null) {

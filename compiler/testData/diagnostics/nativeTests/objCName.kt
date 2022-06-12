@@ -141,6 +141,14 @@ class ExactChecks {
     ): Int = this * param
 }
 
+@ObjCName("ObjCEnumExactChecks", exact = true)
+enum class EnumExactChecks {
+    <!INAPPLICABLE_EXACT_OBJC_NAME!>@ObjCName("objCEntryOne", exact = true)<!>
+    ENTRY_ONE,
+    @ObjCName("objCEntryTwo")
+    ENTRY_TWO
+}
+
 open class Base {
     @ObjCName("foo1")
     open fun foo() {}
