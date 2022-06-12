@@ -32,6 +32,7 @@ private func testObjCNameOverrides() throws {
     object.someOtherValue = 1
     try assertEquals(actual: object.someOtherValue, expected: 1)
     try assertEquals(actual: object.someOtherFunction(receiver: 2, otherParam: 4), expected: 8)
+    try assertEquals(actual: ObjCNameC4().foo(objCReceiver: 3, objCParam: 5), expected: 15)
 }
 
 private func testObjCNameNestedClass() throws {
