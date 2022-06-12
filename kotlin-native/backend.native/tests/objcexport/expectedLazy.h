@@ -1244,6 +1244,15 @@ __attribute__((swift_name("ObjCNameC4")))
 @end;
 
 __attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("ObjCNameSwiftObject")))
+@interface KtObjCNameObjCObject : KtBase
++ (instancetype)alloc __attribute__((unavailable));
++ (instancetype)allocWithZone:(struct _NSZone *)zone __attribute__((unavailable));
++ (instancetype)objCNameObjCObject __attribute__((swift_name("init()")));
+@property (class, readonly, getter=shared) KtObjCNameObjCObject *shared __attribute__((swift_name("shared")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
 __attribute__((swift_name("ObjCNameBKt")))
 @interface KtObjCNameBKt : KtBase
 + (int32_t)getSomeValueOf:(id<KtObjCNameI1>)receiver __attribute__((swift_name("getSomeValue(of:)")));

@@ -63,3 +63,6 @@ private interface ObjCNameI2 {
 class ObjCNameC4: ObjCNameI2 {
     override fun Int.foo(param: Int): Int = this * param
 }
+
+@ObjCName("ObjCNameObjCObject", "ObjCNameSwiftObject")
+object ObjCNameKotlinObject
