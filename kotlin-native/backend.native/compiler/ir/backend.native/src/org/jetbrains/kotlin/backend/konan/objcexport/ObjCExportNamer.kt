@@ -955,19 +955,21 @@ private fun DeclarationDescriptor.getObjCName(): ObjCName {
     return ObjCName(name.asString(), objCName, swiftName, isExact)
 }
 
+private fun <T> T.upcast(): T = this
+
 private fun CallableDescriptor.getObjCName(): ObjCName =
-        overriddenDescriptors.firstOrNull()?.getObjCName() ?: (this as DeclarationDescriptor).getObjCName()
+        overriddenDescriptors.firstOrNull()?.getObjCName() ?: upcast<DeclarationDescriptor>().getObjCName()
 
 private fun ParameterDescriptor.getObjCName(): ObjCName {
-    val callableDescriptor = containingDeclaration as? CallableDescriptor ?: return (this as CallableDescriptor).getObjCName()
+    val callableDescriptor = containingDeclaration as? CallableDescriptor ?: return upcast<CallableDescriptor>().getObjCName()
     fun CallableDescriptor.getBase(): CallableDescriptor = overriddenDescriptors.firstOrNull()?.getBase() ?: this
     val baseCallableDescriptor = callableDescriptor.getBase()
     if (callableDescriptor.extensionReceiverParameter == this) {
-        return (baseCallableDescriptor.extensionReceiverParameter as CallableDescriptor).getObjCName()
+        return baseCallableDescriptor.extensionReceiverParameter!!.upcast<CallableDescriptor>().getObjCName()
     }
     val parameterIndex = callableDescriptor.valueParameters.indexOf(this)
     if (parameterIndex != -1) {
-        return (baseCallableDescriptor.valueParameters[parameterIndex] as CallableDescriptor).getObjCName()
+        return baseCallableDescriptor.valueParameters[parameterIndex].upcast<CallableDescriptor>().getObjCName()
     }
     error("Unexpected parameter: $this")
 }
