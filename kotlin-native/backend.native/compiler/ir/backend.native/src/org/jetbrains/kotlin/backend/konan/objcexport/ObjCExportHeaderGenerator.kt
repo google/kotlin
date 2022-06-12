@@ -384,9 +384,10 @@ internal class ObjCExportTranslatorImpl(
 
                     descriptor.enumEntries.forEach {
                         val entryName = namer.getEnumEntrySelector(it)
+                        val swiftName = namer.getEnumEntrySwiftName(it)
                         add {
                             ObjCProperty(entryName, it, type, listOf("class", "readonly"),
-                                    declarationAttributes = listOf(swiftNameAttribute(entryName)))
+                                    declarationAttributes = listOf(swiftNameAttribute(swiftName)))
                         }
                     }
 
@@ -1352,8 +1353,11 @@ internal fun ClassDescriptor.needCompanionObjectProperty(namer: ObjCExportNamer,
     val companionObject = companionObjectDescriptor
     if (companionObject == null || !mapper.shouldBeExposed(companionObject)) return false
 
-    if (kind == ClassKind.ENUM_CLASS && enumEntries.any { namer.getEnumEntrySelector(it) == ObjCExportNamer.companionObjectPropertyName })
-        return false // 'companion' property would clash with enum entry, don't generate it.
+    if (kind == ClassKind.ENUM_CLASS && enumEntries.any {
+                namer.getEnumEntrySelector(it) == ObjCExportNamer.companionObjectPropertyName ||
+                        namer.getEnumEntrySwiftName(it) == ObjCExportNamer.companionObjectPropertyName
+            }
+    ) return false // 'companion' property would clash with enum entry, don't generate it.
 
     return true
 }

@@ -66,3 +66,13 @@ class ObjCNameC4: ObjCNameI2 {
 
 @ObjCName("ObjCNameObjCObject", "ObjCNameSwiftObject")
 object ObjCNameKotlinObject
+
+@ObjCName("ObjCNameObjCEnum", "ObjCNameSwiftEnum")
+enum class ObjCNameKotlinEnum {
+    @ObjCName("objcOne", "swiftOne")
+    KOTLIN_ONE,
+    @ObjCName("objcTwo", "swiftTwo")
+    kotlinTwo,
+    @ObjCName("objcThree", "swiftThree")
+    KotlinThree
+}

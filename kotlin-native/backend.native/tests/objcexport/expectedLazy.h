@@ -1253,6 +1253,18 @@ __attribute__((swift_name("ObjCNameSwiftObject")))
 @end;
 
 __attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("ObjCNameSwiftEnum")))
+@interface KtObjCNameObjCEnum : KtKotlinEnum<KtObjCNameObjCEnum *>
++ (instancetype)alloc __attribute__((unavailable));
++ (instancetype)allocWithZone:(struct _NSZone *)zone __attribute__((unavailable));
+- (instancetype)initWithName:(NSString *)name ordinal:(int32_t)ordinal __attribute__((swift_name("init(name:ordinal:)"))) __attribute__((objc_designated_initializer)) __attribute__((unavailable));
+@property (class, readonly) KtObjCNameObjCEnum *objcOne __attribute__((swift_name("swiftOne")));
+@property (class, readonly) KtObjCNameObjCEnum *objcTwo __attribute__((swift_name("swiftTwo")));
+@property (class, readonly) KtObjCNameObjCEnum *objcThree __attribute__((swift_name("swiftThree")));
++ (KtKotlinArray<KtObjCNameObjCEnum *> *)values __attribute__((swift_name("values()")));
+@end;
+
+__attribute__((objc_subclassing_restricted))
 __attribute__((swift_name("ObjCNameBKt")))
 @interface KtObjCNameBKt : KtBase
 + (int32_t)getSomeValueOf:(id<KtObjCNameI1>)receiver __attribute__((swift_name("getSomeValue(of:)")));

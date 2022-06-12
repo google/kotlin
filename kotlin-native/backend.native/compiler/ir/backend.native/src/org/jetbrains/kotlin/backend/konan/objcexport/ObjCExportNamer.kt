@@ -63,6 +63,7 @@ interface ObjCExportNamer {
     fun getPropertyName(property: PropertyDescriptor): PropertyName
     fun getObjectInstanceSelector(descriptor: ClassDescriptor): String
     fun getEnumEntrySelector(descriptor: ClassDescriptor): String
+    fun getEnumEntrySwiftName(descriptor: ClassDescriptor): String
     fun getEnumValuesSelector(descriptor: FunctionDescriptor): String
     fun getTypeParameterName(typeParameterDescriptor: TypeParameterDescriptor): String
 
@@ -374,10 +375,13 @@ internal class ObjCExportNamerImpl(
         override fun conflict(first: ClassDescriptor, second: ClassDescriptor) = false
     }
 
-    private val enumClassSelectors = object : ClassSelectorNameMapping<DeclarationDescriptor>() {
+    private inner class EnumNameMapping : ClassSelectorNameMapping<DeclarationDescriptor>() {
         override fun conflict(first: DeclarationDescriptor, second: DeclarationDescriptor) =
                 first.containingDeclaration == second.containingDeclaration
     }
+
+    private val enumClassSelectors = EnumNameMapping()
+    private val enumClassSwiftNames = EnumNameMapping()
 
     override fun getFileClassName(file: SourceFile): ObjCExportNamer.ClassOrProtocolName {
         val candidate by lazy {
@@ -595,17 +599,30 @@ internal class ObjCExportNamerImpl(
         }
     }
 
+    private fun ClassDescriptor.getEnumEntryName(forSwift: Boolean): Sequence<String> {
+        val name = getObjCName().asIdentifier(forSwift) {
+            // FOO_BAR_BAZ -> fooBarBaz:
+            it.split('_').mapIndexed { index, s ->
+                val lower = s.lowercase()
+                if (index == 0) lower else lower.replaceFirstChar(Char::uppercaseChar)
+            }.joinToString("").toIdentifier()
+        }.mangleIfSpecialFamily("the")
+        return StringBuilder(name).mangledBySuffixUnderscores()
+    }
+
     override fun getEnumEntrySelector(descriptor: ClassDescriptor): String {
         assert(descriptor.kind == ClassKind.ENUM_ENTRY)
 
         return enumClassSelectors.getOrPut(descriptor) {
-            // FOO_BAR_BAZ -> fooBarBaz:
-            val name = descriptor.name.asString().split('_').mapIndexed { index, s ->
-                val lower = s.lowercase()
-                if (index == 0) lower else lower.replaceFirstChar(Char::uppercaseChar)
-            }.joinToString("").toIdentifier().mangleIfSpecialFamily("the")
+            descriptor.getEnumEntryName(false)
+        }
+    }
 
-            StringBuilder(name).mangledBySuffixUnderscores()
+    override fun getEnumEntrySwiftName(descriptor: ClassDescriptor): String {
+        assert(descriptor.kind == ClassKind.ENUM_ENTRY)
+
+        return enumClassSwiftNames.getOrPut(descriptor) {
+            descriptor.getEnumEntryName(true)
         }
     }
 
@@ -939,8 +956,8 @@ private class ObjCName(
 
     fun asString(forSwift: Boolean): String = swiftName.takeIf { forSwift } ?: objCName ?: kotlinName
 
-    fun asIdentifier(forSwift: Boolean, default: () -> String = kotlinName::toIdentifier): String =
-            swiftName.takeIf { forSwift } ?: objCName ?: default()
+    fun asIdentifier(forSwift: Boolean, default: (String) -> String = { it.toIdentifier() }): String =
+            swiftName.takeIf { forSwift } ?: objCName ?: default(kotlinName)
 }
 
 private fun DeclarationDescriptor.getObjCName(): ObjCName {
