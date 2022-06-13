@@ -37,10 +37,6 @@ internal interface ObjCExportNameTranslator {
 
     fun getCategoryName(file: KtFile): String
 
-    fun getClassOrProtocolName(
-            ktClassOrObject: KtClassOrObject
-    ): ObjCExportNamer.ClassOrProtocolName
-
     fun getTypeParameterName(ktTypeParameter: KtTypeParameter): String
 }
 
@@ -113,51 +109,6 @@ internal open class ObjCExportNameTranslatorImpl(
 
     override fun getCategoryName(file: KtFile): String =
             helper.translateFileName(file)
-
-    override fun getClassOrProtocolName(ktClassOrObject: KtClassOrObject): ObjCExportNamer.ClassOrProtocolName =
-            ObjCExportNamer.ClassOrProtocolName(
-                    swiftName = getClassOrProtocolAsSwiftName(ktClassOrObject, true),
-                    objCName = buildString {
-                        getClassOrProtocolAsSwiftName(ktClassOrObject, false).split('.').forEachIndexed { index, part ->
-                            append(if (index == 0) part else part.replaceFirstChar(Char::uppercaseChar))
-                        }
-                    }
-            )
-
-    private fun getClassOrProtocolAsSwiftName(
-            ktClassOrObject: KtClassOrObject,
-            forSwift: Boolean
-    ): String = buildString {
-        val objCName = ktClassOrObject.getObjCName()
-        if (objCName.isExact) {
-            append(objCName.asIdentifier(forSwift))
-        } else {
-            val outerClass = ktClassOrObject.getStrictParentOfType<KtClassOrObject>()
-            if (outerClass != null) {
-                appendNameWithContainer(ktClassOrObject, objCName, outerClass, forSwift)
-            } else {
-                if (!forSwift) append(configuration.topLevelNamePrefix)
-                append(objCName.asIdentifier(forSwift))
-            }
-        }
-    }
-
-    private fun StringBuilder.appendNameWithContainer(
-            ktClassOrObject: KtClassOrObject,
-            objCName: ObjCName,
-            outerClass: KtClassOrObject,
-            forSwift: Boolean
-    ) = helper.appendNameWithContainer(
-            this,
-            ktClassOrObject, objCName.asIdentifier(forSwift),
-            outerClass, getClassOrProtocolAsSwiftName(outerClass, forSwift),
-            object : ObjCExportNamingHelper.ClassInfoProvider<KtClassOrObject> {
-                override fun hasGenerics(clazz: KtClassOrObject): Boolean =
-                        clazz.typeParametersWithOuter.count() != 0
-
-                override fun isInterface(clazz: KtClassOrObject): Boolean = ktClassOrObject.isInterface
-            }
-    )
 
     override fun getTypeParameterName(ktTypeParameter: KtTypeParameter): String = buildString {
         append(ktTypeParameter.name!!.toIdentifier())

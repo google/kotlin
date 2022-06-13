@@ -34,6 +34,7 @@ interface ObjCExportTranslator {
     fun translateFile(file: SourceFile, declarations: List<CallableMemberDescriptor>): ObjCInterface
     fun translateClass(descriptor: ClassDescriptor): ObjCInterface
     fun translateInterface(descriptor: ClassDescriptor): ObjCProtocol
+    fun translateClassOrInterfaceName(descriptor: ClassDescriptor): ObjCExportNamer.ClassOrProtocolName
     fun translateExtensions(classDescriptor: ClassDescriptor, declarations: List<CallableMemberDescriptor>): ObjCInterface
 }
 
@@ -217,7 +218,7 @@ internal class ObjCExportTranslatorImpl(
         }
     }
 
-    private fun translateClassOrInterfaceName(descriptor: ClassDescriptor): ObjCExportNamer.ClassOrProtocolName {
+    override fun translateClassOrInterfaceName(descriptor: ClassDescriptor): ObjCExportNamer.ClassOrProtocolName {
         assert(mapper.shouldBeExposed(descriptor)) { "Shouldn't be exposed: $descriptor" }
         if (ErrorUtils.isError(descriptor)) {
             return ObjCExportNamer.ClassOrProtocolName("ERROR", "ERROR")

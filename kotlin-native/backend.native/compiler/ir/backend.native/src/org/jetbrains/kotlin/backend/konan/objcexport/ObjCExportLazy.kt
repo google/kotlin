@@ -128,12 +128,11 @@ internal class ObjCExportLazyImpl(
     }
 
     private fun translateClass(ktClassOrObject: KtClassOrObject): ObjCClass<*> {
-        val name = nameTranslator.getClassOrProtocolName(ktClassOrObject)
 
         // Note: some attributes may be missing (e.g. "unavailable" for unexposed classes).
 
         return if (ktClassOrObject.isInterface) {
-            LazyObjCProtocolImpl(name, ktClassOrObject, this)
+            LazyObjCProtocolImpl(ktClassOrObject, this)
         } else {
             val isFinal = ktClassOrObject.modalityModifier() == null ||
                     ktClassOrObject.hasModifier(KtTokens.FINAL_KEYWORD)
@@ -144,8 +143,7 @@ internal class ObjCExportLazyImpl(
                 emptyList()
             }
 
-            LazyObjCInterfaceImpl(name,
-                                  attributes,
+            LazyObjCInterfaceImpl(attributes,
                                   generics = translateGenerics(ktClassOrObject),
                                   psi = ktClassOrObject,
                                   lazy = this)
@@ -308,12 +306,15 @@ internal class ObjCExportLazyImpl(
     }
 
     private class LazyObjCProtocolImpl(
-        name: ObjCExportNamer.ClassOrProtocolName,
         override val psi: KtClassOrObject,
         private val lazy: ObjCExportLazyImpl
-    ) : LazyObjCProtocol(name) {
+    ) : LazyObjCProtocol() {
+        private val classOrInterfaceName by lazy { lazy.translator.translateClassOrInterfaceName(descriptor) }
         override val descriptor: ClassDescriptor by lazy { lazy.resolve(psi) }
-
+        override val name: String
+            get() = classOrInterfaceName.objCName
+        override val attributes: List<String>
+            get() = classOrInterfaceName.toNameAttributes()
         override val isValid: Boolean
             get() = lazy.isValid
 
@@ -321,14 +322,16 @@ internal class ObjCExportLazyImpl(
     }
 
     private class LazyObjCInterfaceImpl(
-        name: ObjCExportNamer.ClassOrProtocolName,
         attributes: List<String>,
         generics: List<ObjCGenericTypeDeclaration>,
         override val psi: KtClassOrObject,
         private val lazy: ObjCExportLazyImpl
-    ) : LazyObjCInterface(name = name, generics = generics, categoryName = null, attributes = attributes) {
+    ) : LazyObjCInterface(generics = generics, categoryName = null) {
         override val descriptor: ClassDescriptor by lazy { lazy.resolve(psi) }
-
+        private val classOrInterfaceName by lazy { lazy.translator.translateClassOrInterfaceName(descriptor) }
+        override val name: String
+            get() = classOrInterfaceName.objCName
+        override val attributes: List<String> = attributes + classOrInterfaceName.toNameAttributes()
         override val isValid: Boolean
             get() = lazy.isValid
 
@@ -340,9 +343,13 @@ internal class ObjCExportLazyImpl(
         private val file: KtFile,
         private val declarations: List<KtCallableDeclaration>,
         private val lazy: ObjCExportLazyImpl
-    ) : LazyObjCInterface(name = name, generics = emptyList(), categoryName = null, attributes = listOf(OBJC_SUBCLASSING_RESTRICTED)) {
+    ) : LazyObjCInterface(generics = emptyList(), categoryName = null) {
         override val descriptor: ClassDescriptor?
             get() = null
+
+        override val name = name.objCName
+
+        override val attributes = listOf(OBJC_SUBCLASSING_RESTRICTED) + name.toNameAttributes()
 
         override val isValid: Boolean
             get() = lazy.isValid
@@ -366,9 +373,13 @@ internal class ObjCExportLazyImpl(
         private val classDescriptor: ClassDescriptor,
         private val declarations: List<KtCallableDeclaration>,
         private val lazy: ObjCExportLazyImpl
-    ) : LazyObjCInterface(name = name.objCName, generics = emptyList(), categoryName = categoryName, attributes = emptyList()) {
+    ) : LazyObjCInterface(generics = emptyList(), categoryName = categoryName) {
         override val descriptor: ClassDescriptor?
             get() = null
+
+        override val name: String = name.objCName
+
+        override val attributes: List<String> = name.toNameAttributes()
 
         override val isValid: Boolean
             get() = lazy.isValid
@@ -388,18 +399,9 @@ internal class ObjCExportLazyImpl(
 private abstract class LazyObjCInterface : ObjCInterface {
 
     constructor(
-            name: ObjCExportNamer.ClassOrProtocolName,
             generics: List<ObjCGenericTypeDeclaration>,
             categoryName: String?,
-            attributes: List<String>
-    ) : super(name.objCName, generics, categoryName, attributes + name.toNameAttributes())
-
-    constructor(
-            name: String,
-            generics: List<ObjCGenericTypeDeclaration>,
-            categoryName: String,
-            attributes: List<String>
-    ) : super(name, generics, categoryName, attributes)
+    ) : super(generics, categoryName)
 
     protected abstract fun computeRealStub(): ObjCInterface
 
@@ -419,8 +421,7 @@ private abstract class LazyObjCInterface : ObjCInterface {
 }
 
 private abstract class LazyObjCProtocol(
-        name: ObjCExportNamer.ClassOrProtocolName
-) : ObjCProtocol(name.objCName, name.toNameAttributes()) {
+) : ObjCProtocol() {
 
     protected abstract fun computeRealStub(): ObjCProtocol
 

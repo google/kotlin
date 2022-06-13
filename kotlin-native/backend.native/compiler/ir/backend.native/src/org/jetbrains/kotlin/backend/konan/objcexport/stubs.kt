@@ -19,42 +19,40 @@ data class ObjCClassForwardDeclaration(
         val typeDeclarations: List<ObjCGenericTypeDeclaration> = emptyList()
 )
 
-abstract class Stub<out D : DeclarationDescriptor>(val name: String, val comment: ObjCComment? = null) {
+abstract class Stub<out D : DeclarationDescriptor>(val comment: ObjCComment? = null) {
     abstract val descriptor: D?
+    abstract val name: String
     open val psi: PsiElement?
         get() = ((descriptor as? DeclarationDescriptorWithSource)?.source as? PsiSourceElement)?.psi
     open val isValid: Boolean
         get() = descriptor?.module?.isValid ?: true
 }
 
-abstract class ObjCTopLevel<out D : DeclarationDescriptor>(name: String) : Stub<D>(name)
+abstract class ObjCTopLevel<out D : DeclarationDescriptor>() : Stub<D>()
 
-abstract class ObjCClass<out D : DeclarationDescriptor>(name: String,
-                                                        val attributes: List<String>) : ObjCTopLevel<D>(name) {
+abstract class ObjCClass<out D : DeclarationDescriptor>() : ObjCTopLevel<D>() {
+    abstract val attributes: List<String>
     abstract val superProtocols: List<String>
     abstract val members: List<Stub<*>>
 }
 
-abstract class ObjCProtocol(name: String,
-                            attributes: List<String>) : ObjCClass<ClassDescriptor>(name, attributes)
+abstract class ObjCProtocol() : ObjCClass<ClassDescriptor>()
 
 class ObjCProtocolImpl(
-        name: String,
+        override val name: String,
         override val descriptor: ClassDescriptor,
         override val superProtocols: List<String>,
         override val members: List<Stub<*>>,
-        attributes: List<String> = emptyList()) : ObjCProtocol(name, attributes)
+        override val attributes: List<String> = emptyList()) : ObjCProtocol()
 
-abstract class ObjCInterface(name: String,
-                             val generics: List<ObjCGenericTypeDeclaration>,
-                             val categoryName: String?,
-                             attributes: List<String>) : ObjCClass<ClassDescriptor>(name, attributes) {
+abstract class ObjCInterface(val generics: List<ObjCGenericTypeDeclaration>,
+                             val categoryName: String?) : ObjCClass<ClassDescriptor>() {
     abstract val superClass: String?
     abstract val superClassGenerics: List<ObjCNonNullReferenceType>
 }
 
 class ObjCInterfaceImpl(
-        name: String,
+        override val name: String,
         generics: List<ObjCGenericTypeDeclaration> = emptyList(),
         override val descriptor: ClassDescriptor? = null,
         override val superClass: String? = null,
@@ -62,8 +60,8 @@ class ObjCInterfaceImpl(
         override val superProtocols: List<String> = emptyList(),
         categoryName: String? = null,
         override val members: List<Stub<*>> = emptyList(),
-        attributes: List<String> = emptyList()
-) : ObjCInterface(name, generics, categoryName, attributes)
+        override val attributes: List<String> = emptyList()
+) : ObjCInterface(generics, categoryName)
 
 class ObjCMethod(
         override val descriptor: DeclarationDescriptor?,
@@ -72,20 +70,21 @@ class ObjCMethod(
         val selectors: List<String>,
         val parameters: List<ObjCParameter>,
         val attributes: List<String>,
-        comment: ObjCComment? = null
-) : Stub<DeclarationDescriptor>(buildMethodName(selectors, parameters), comment)
+        comment: ObjCComment? = null,
+        override val name: String = buildMethodName(selectors, parameters)
+) : Stub<DeclarationDescriptor>(comment)
 
-class ObjCParameter(name: String,
+class ObjCParameter(override val name: String,
                     override val descriptor: ParameterDescriptor?,
-                    val type: ObjCType) : Stub<ParameterDescriptor>(name)
+                    val type: ObjCType) : Stub<ParameterDescriptor>()
 
-class ObjCProperty(name: String,
+class ObjCProperty(override val name: String,
                    override val descriptor: DeclarationDescriptorWithSource?,
                    val type: ObjCType,
                    val propertyAttributes: List<String>,
                    val setterName: String? = null,
                    val getterName: String? = null,
-                   val declarationAttributes: List<String> = emptyList()) : Stub<DeclarationDescriptorWithSource>(name) {
+                   val declarationAttributes: List<String> = emptyList()) : Stub<DeclarationDescriptorWithSource>() {
 
     @Deprecated("", ReplaceWith("this.propertyAttributes"), DeprecationLevel.WARNING)
     val attributes: List<String> get() = propertyAttributes
