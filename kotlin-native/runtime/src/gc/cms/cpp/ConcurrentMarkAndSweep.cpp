@@ -44,8 +44,7 @@ struct MarkTraits {
 
     static void enqueue(MarkQueue& queue, ObjHeader* object) noexcept {
         auto& objectData = mm::ObjectFactory<gc::ConcurrentMarkAndSweep>::NodeRef::From(object).ObjectData();
-        if (objectData.color() == gc::ConcurrentMarkAndSweep::ObjectData::Color::kBlack) return;
-        objectData.setColor(gc::ConcurrentMarkAndSweep::ObjectData::Color::kBlack);
+        if (!objectData.atomicSetToBlack()) return;
         queue.push_front(objectData);
     }
 };
@@ -90,6 +89,15 @@ void gc::ConcurrentMarkAndSweep::ThreadData::ScheduleAndWaitFullGCWithFinalizers
 void gc::ConcurrentMarkAndSweep::ThreadData::OnOOM(size_t size) noexcept {
     RuntimeLogDebug({kTagGC}, "Attempt to GC on OOM at size=%zu", size);
     ScheduleAndWaitFullGC();
+}
+
+void gc::ConcurrentMarkAndSweep::ThreadData::Mark() noexcept {
+    RuntimeLogDebug({kTagGC}, "Concurrent marking in thread %d", konan::currentThreadId());
+    auto& threadRegistry = kotlin::mm::ThreadRegistry::Instance();
+    MarkQueue markQueue_;
+    gc::collectRootSetForThread<MarkTraits>(markQueue_, *threadRegistry.CurrentThreadData());
+    MarkStats stats = gc::Mark<MarkTraits>(markQueue_);
+    gc_.aliveHeapSetBytes_ += stats.aliveHeapSetBytes;
 }
 
 gc::ConcurrentMarkAndSweep::ConcurrentMarkAndSweep(
@@ -138,15 +146,15 @@ bool gc::ConcurrentMarkAndSweep::FinalizersThreadIsRunning() noexcept {
 bool gc::ConcurrentMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
     RuntimeLogDebug({kTagGC}, "Attempt to suspend threads by thread %d", konan::currentThreadId());
     auto timeStartUs = konan::getTimeMicros();
-    bool didSuspend = mm::RequestThreadsSuspension();
+    bool didSuspend = mm::RequestThreadsSuspension(true);
     RuntimeAssert(didSuspend, "Only GC thread can request suspension");
     RuntimeLogDebug({kTagGC}, "Requested thread suspension by thread %d", konan::currentThreadId());
 
     RuntimeAssert(!kotlin::mm::IsCurrentThreadRegistered(), "Concurrent GC must run on unregistered thread");
-
-    mm::WaitForThreadsSuspension();
+    mm::WaitForThreadsReadyToMark();
     auto timeSuspendUs = konan::getTimeMicros();
     RuntimeLogDebug({kTagGC}, "Suspended all threads in %" PRIu64 " microseconds", timeSuspendUs - timeStartUs);
+    aliveHeapSetBytes_ = 0;
 
     auto& scheduler = gcScheduler_;
     scheduler.gcData().OnPerformFullGC();
@@ -154,28 +162,33 @@ bool gc::ConcurrentMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
     state_.start(epoch);
     RuntimeLogInfo(
             {kTagGC}, "Started GC epoch %" PRId64 ". Time since last GC %" PRIu64 " microseconds", epoch, timeStartUs - lastGCTimestampUs_);
+    RuntimeLogDebug({kTagGC}, "Requesting marking in threads");
+    mm::RequestThreadsStartMarking();
     gc::collectRootSet<MarkTraits>(markQueue_);
-    auto timeRootSetUs = konan::getTimeMicros();
-    // Can be unsafe, because we've stopped the world.
 
+    // Can be unsafe, because we've stopped the world.
     auto objectsCountBefore = objectFactory_.GetSizeUnsafe();
-    RuntimeLogInfo(
-            {kTagGC}, "Collected root set of size %zu in %" PRIu64 " microseconds", markQueue_.size(),
-            timeRootSetUs - timeSuspendUs);
+
     auto markStats = gc::Mark<MarkTraits>(markQueue_);
-    auto timeMarkUs = konan::getTimeMicros();
-    RuntimeLogDebug({kTagGC}, "Marked %zu objects in %" PRIu64 " microseconds", markStats.aliveHeapSet, timeMarkUs - timeRootSetUs);
-    scheduler.gcData().UpdateAliveSetBytes(markStats.aliveHeapSetBytes);
+    aliveHeapSetBytes_ += markStats.aliveHeapSetBytes;
+
+    RuntimeLogDebug({kTagGC}, "Waiting for marking in threads");
+    mm::WaitForThreadsMarking();
+    auto timeMarkingUs = konan::getTimeMicros();
+    RuntimeLogDebug({kTagGC}, "Marked all threads in %" PRIu64 " microseconds", timeMarkingUs - timeStartUs);
+
+    scheduler.gcData().UpdateAliveSetBytes(aliveHeapSetBytes_);
+
     gc::SweepExtraObjects<SweepTraits>(mm::GlobalData::Instance().extraObjectDataFactory());
     auto timeSweepExtraObjectsUs = konan::getTimeMicros();
-    RuntimeLogDebug({kTagGC}, "Sweeped extra objects in %" PRIu64 " microseconds", timeSweepExtraObjectsUs - timeMarkUs);
+    RuntimeLogDebug({kTagGC}, "Sweeped extra objects in %" PRIu64 " microseconds", timeSweepExtraObjectsUs - timeMarkingUs);
 
     auto objectFactoryIterable = objectFactory_.LockForIter();
 
     mm::ResumeThreads();
     auto timeResumeUs = konan::getTimeMicros();
 
-    RuntimeLogDebug({kTagGC},
+    RuntimeLogInfo({kTagGC},
                     "Resumed threads in %" PRIu64 " microseconds. Total pause for most threads is %"  PRIu64" microseconds",
                     timeResumeUs - timeSweepExtraObjectsUs, timeResumeUs - timeStartUs);
 

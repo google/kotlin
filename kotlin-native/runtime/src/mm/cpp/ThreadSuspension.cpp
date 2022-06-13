@@ -20,6 +20,11 @@ bool isSuspendedOrNative(kotlin::mm::ThreadData& thread) noexcept {
     return suspensionData.suspended() || suspensionData.state() == kotlin::ThreadState::kNative;
 }
 
+bool isSuspendedOrMarkingOrNative(kotlin::mm::ThreadData& thread) noexcept {
+    auto& suspensionData = thread.suspensionData();
+    return suspensionData.suspended() || suspensionData.marking() || suspensionData.state() == kotlin::ThreadState::kNative;
+}
+
 template<typename F>
 bool allThreads(F predicate) noexcept {
     auto& threadRegistry = kotlin::mm::ThreadRegistry::Instance();
@@ -44,27 +49,42 @@ void yield() noexcept {
 
 THREAD_LOCAL_VARIABLE bool gSuspensionRequestedByCurrentThread = false;
 [[clang::no_destroy]] std::mutex gSuspensionMutex;
-[[clang::no_destroy]] std::condition_variable gSuspendsionCondVar;
+[[clang::no_destroy]] std::condition_variable gSuspensionCondVar;
+[[clang::no_destroy]] std::condition_variable gMarkingCondVar;
 
 } // namespace
 
 std::atomic<bool> kotlin::mm::internal::gSuspensionRequested = false;
+std::atomic<bool> kotlin::mm::internal::gMarkingRequested = false;
 
 NO_EXTERNAL_CALLS_CHECK void kotlin::mm::ThreadSuspensionData::suspendIfRequestedSlowPath() noexcept {
-    std::unique_lock lock(gSuspensionMutex);
     if (IsThreadSuspensionRequested()) {
         auto threadId = konan::currentThreadId();
         auto suspendStartMs = konan::getTimeMicros();
         RuntimeLogDebug({kTagGC, kTagMM}, "Suspending thread %d", threadId);
-        AutoReset scopedAssign(&suspended_, true);
-        gSuspendsionCondVar.wait(lock, []() { return !IsThreadSuspensionRequested(); });
+        AutoReset scopedAssignMarking(&marking_, isMarkingRequested());
+        if (marking_) {
+            auto& threadRegistry = kotlin::mm::ThreadRegistry::Instance();
+            auto* currentThread = threadRegistry.CurrentThreadData();
+            currentThread->Publish();
+            {
+                std::unique_lock lock(gSuspensionMutex);
+                gSuspensionCondVar.wait(lock, []() { return !isMarkingRequested(); });
+            }
+            RuntimeLogDebug({kTagGC, kTagMM}, "Marking in thread %d", threadId);
+            currentThread->gc().Mark();
+        }
+        std::unique_lock lock(gSuspensionMutex);
+        AutoReset scopedAssignSuspended(&suspended_, true);
+        gMarkingCondVar.notify_all();
+        gSuspensionCondVar.wait(lock, []() { return !IsThreadSuspensionRequested(); });
         auto suspendEndMs = konan::getTimeMicros();
         RuntimeLogDebug({kTagGC, kTagMM}, "Resuming thread %d after %" PRIu64 " microseconds of suspension",
                         threadId, suspendEndMs - suspendStartMs);
     }
 }
 
-NO_EXTERNAL_CALLS_CHECK bool kotlin::mm::RequestThreadsSuspension() noexcept {
+NO_EXTERNAL_CALLS_CHECK bool kotlin::mm::RequestThreadsSuspension(bool markBeforeSuspending) noexcept {
     RuntimeAssert(gSuspensionRequestedByCurrentThread == false, "Current thread already suspended threads.");
     {
         std::unique_lock lock(gSuspensionMutex);
@@ -73,6 +93,7 @@ NO_EXTERNAL_CALLS_CHECK bool kotlin::mm::RequestThreadsSuspension() noexcept {
         if (actual) {
             return false;
         }
+        internal::gMarkingRequested = markBeforeSuspending;
     }
     gSuspensionRequestedByCurrentThread = true;
 
@@ -86,6 +107,21 @@ void kotlin::mm::WaitForThreadsSuspension() noexcept {
     }
 }
 
+void kotlin::mm::WaitForThreadsReadyToMark() noexcept {
+    // Spin wating for threads to suspend. Ignore Native threads.
+    while(!allThreads(isSuspendedOrMarkingOrNative)) {
+        yield();
+    }
+}
+
+void kotlin::mm::WaitForThreadsMarking() noexcept {
+    RuntimeAssert(!isMarkingRequested(), "No new threads should be able to start marking while we wait");
+    std::unique_lock lock(gSuspensionMutex);
+    gMarkingCondVar.wait(lock, []() {
+        return allThreads(isSuspendedOrNative);
+    });
+}
+
 NO_INLINE void kotlin::mm::SuspendIfRequestedSlowPath() noexcept {
     mm::ThreadRegistry::Instance().CurrentThreadData()->suspensionData().suspendIfRequestedSlowPath();
 }
@@ -94,6 +130,14 @@ ALWAYS_INLINE void kotlin::mm::SuspendIfRequested() noexcept {
     if (IsThreadSuspensionRequested()) {
         SuspendIfRequestedSlowPath();
     }
+}
+
+void kotlin::mm::RequestThreadsStartMarking() noexcept {
+    {
+        std::unique_lock lock(gSuspensionMutex);
+        internal::gMarkingRequested = false;
+    }
+    gSuspensionCondVar.notify_all();
 }
 
 void kotlin::mm::ResumeThreads() noexcept {
@@ -106,5 +150,5 @@ void kotlin::mm::ResumeThreads() noexcept {
         internal::gSuspensionRequested = false;
     }
     gSuspensionRequestedByCurrentThread = false;
-    gSuspendsionCondVar.notify_all();
+    gSuspensionCondVar.notify_all();
 }

@@ -32,6 +32,7 @@ struct MarkStats {
 template <typename Traits>
 MarkStats Mark(typename Traits::MarkQueue& markQueue) noexcept {
     MarkStats stats;
+    auto timeStart = konan::getTimeMicros();
     while (!Traits::isEmpty(markQueue)) {
         ObjHeader* top = Traits::dequeue(markQueue);
 
@@ -57,6 +58,8 @@ MarkStats Mark(typename Traits::MarkQueue& markQueue) noexcept {
             }
         }
     }
+    auto timeEnd = konan::getTimeMicros();
+    RuntimeLogDebug({kTagGC}, "Marked %zu objects in %" PRIu64 " microseconds in thread %d", stats.aliveHeapSet, timeEnd - timeStart, konan::currentThreadId());
     return stats;
 }
 
@@ -108,42 +111,40 @@ typename Traits::ObjectFactory::FinalizerQueue Sweep(typename Traits::ObjectFact
     return Sweep<Traits>(iter);
 }
 
-// TODO: This needs some tests now.
 template <typename Traits>
-void collectRootSet(typename Traits::MarkQueue& markQueue) noexcept {
-    Traits::clear(markQueue);
-    for (auto& thread : mm::GlobalData::Instance().threadRegistry().LockForIter()) {
-        // TODO: Maybe it's more efficient to do by the suspending thread?
-        thread.Publish();
-        thread.gc().OnStoppedForGC();
-        size_t stack = 0;
-        size_t tls = 0;
-        for (auto value : mm::ThreadRootSet(thread)) {
-            auto* object = value.object;
-            if (!isNullOrMarker(object)) {
-                if (object->heap()) {
-                    Traits::enqueue(markQueue, object);
-                } else {
-                    traverseReferredObjects(object, [&](ObjHeader* field) noexcept {
-                        // Each permanent and stack object has own entry in the root set.
-                        if (field->heap() && !isNullOrMarker(field)) {
-                            Traits::enqueue(markQueue, field);
-                        }
-                    });
-                    RuntimeAssert(!object->has_meta_object(), "Non-heap object %p may not have an extra object data", object);
-                }
-                switch (value.source) {
-                    case mm::ThreadRootSet::Source::kStack:
-                        ++stack;
-                        break;
-                    case mm::ThreadRootSet::Source::kTLS:
-                        ++tls;
-                        break;
-                }
+void collectRootSetForThread(typename Traits::MarkQueue& markQueue, mm::ThreadData& thread) {
+    thread.gc().OnStoppedForGC();
+    size_t stack = 0;
+    size_t tls = 0;
+    for (auto value : mm::ThreadRootSet(thread)) {
+        auto* object = value.object;
+        if (!isNullOrMarker(object)) {
+            if (object->heap()) {
+                Traits::enqueue(markQueue, object);
+            } else {
+                traverseReferredObjects(object, [&](ObjHeader* field) noexcept {
+                    // Each permanent and stack object has own entry in the root set.
+                    if (field->heap() && !isNullOrMarker(field)) {
+                        Traits::enqueue(markQueue, field);
+                    }
+                });
+                RuntimeAssert(!object->has_meta_object(), "Non-heap object %p may not have an extra object data", object);
+            }
+            switch (value.source) {
+                case mm::ThreadRootSet::Source::kStack:
+                    ++stack;
+                    break;
+                case mm::ThreadRootSet::Source::kTLS:
+                    ++tls;
+                    break;
             }
         }
-        RuntimeLogDebug({kTagGC}, "Collected root set for thread stack=%zu tls=%zu", stack, tls);
     }
+    RuntimeLogDebug({kTagGC}, "Collected root set for thread stack=%zu tls=%zu", stack, tls);
+}
+
+template <typename Traits>
+void collectRootSetGlobals(typename Traits::MarkQueue& markQueue) noexcept {
     mm::StableRefRegistry::Instance().ProcessDeletions();
     size_t global = 0;
     size_t stableRef = 0;
@@ -172,6 +173,20 @@ void collectRootSet(typename Traits::MarkQueue& markQueue) noexcept {
         }
     }
     RuntimeLogDebug({kTagGC}, "Collected global root set global=%zu stableRef=%zu", global, stableRef);
+}
+
+// TODO: This needs some tests now.
+template <typename Traits>
+void collectRootSet(typename Traits::MarkQueue& markQueue) noexcept {
+    Traits::clear(markQueue);
+    for (auto& thread : mm::GlobalData::Instance().threadRegistry().LockForIter()) {
+        // TODO: Maybe it's more efficient to do by the suspending thread?
+        if (thread.suspensionData().marking()) continue;
+        RuntimeLogDebug({kTagGC}, "Marking thread %d in GC thread", thread.threadId());
+        thread.Publish();
+        collectRootSetForThread<Traits>(markQueue, thread);
+    }
+    collectRootSetGlobals<Traits>(markQueue);
 }
 
 } // namespace gc

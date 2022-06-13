@@ -16,12 +16,17 @@ namespace mm {
 namespace internal {
 
 extern std::atomic<bool> gSuspensionRequested;
+extern std::atomic<bool> gMarkingRequested;
 
 } // namespace internal
 
 inline bool IsThreadSuspensionRequested() noexcept {
     // TODO: Consider using a more relaxed memory order.
     return internal::gSuspensionRequested.load();
+}
+
+inline bool isMarkingRequested() noexcept {
+    return internal::gMarkingRequested.load();
 }
 
 class ThreadSuspensionData : private Pinned {
@@ -42,6 +47,8 @@ public:
 
     bool suspended() noexcept { return suspended_; }
 
+    bool marking() noexcept { return marking_; }
+
     NO_EXTERNAL_CALLS_CHECK void suspendIfRequested() noexcept {
         if (IsThreadSuspensionRequested()) {
             suspendIfRequestedSlowPath();
@@ -53,10 +60,11 @@ private:
 
     std::atomic<ThreadState> state_;
     std::atomic<bool> suspended_;
+    std::atomic<bool> marking_;
     void suspendIfRequestedSlowPath() noexcept;
 };
 
-bool RequestThreadsSuspension() noexcept;
+bool RequestThreadsSuspension(bool markBeforeSuspending = false) noexcept;
 void WaitForThreadsSuspension() noexcept;
 void SuspendIfRequestedSlowPath() noexcept;
 void SuspendIfRequested() noexcept;
@@ -74,6 +82,15 @@ inline bool SuspendThreads() noexcept {
     WaitForThreadsSuspension();
     return true;
 }
+
+void WaitForThreadsReadyToMark() noexcept;
+
+void WaitForThreadsMarking() noexcept;
+
+/**
+ * Requests all currently suspended threads mark their view of the heap.
+ */
+void RequestThreadsStartMarking() noexcept;
 
 /**
  * Resumes all threads registered in ThreadRegistry that were suspended by the SuspendThreads call.

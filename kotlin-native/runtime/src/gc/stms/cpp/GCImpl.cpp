@@ -46,6 +46,8 @@ void gc::GC::ThreadData::Publish() noexcept {
     impl_->objectFactoryThreadQueue().Publish();
 }
 
+void gc::GC::ThreadData::Mark() noexcept {}
+
 void gc::GC::ThreadData::ClearForTests() noexcept {
     impl_->objectFactoryThreadQueue().ClearForTests();
 }

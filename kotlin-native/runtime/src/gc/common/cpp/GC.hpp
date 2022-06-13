@@ -41,6 +41,8 @@ public:
         void Publish() noexcept;
         void ClearForTests() noexcept;
 
+        void Mark() noexcept;
+
         ObjHeader* CreateObject(const TypeInfo* typeInfo) noexcept;
         ArrayHeader* CreateArray(const TypeInfo* typeInfo, uint32_t elements) noexcept;
 
@@ -64,6 +66,8 @@ public:
     void StartFinalizerThreadIfNeeded() noexcept;
     void StopFinalizerThreadIfRunning() noexcept;
     bool FinalizersThreadIsRunning() noexcept;
+
+    void Mark() noexcept;
 
 private:
     std_support::unique_ptr<Impl> impl_;
