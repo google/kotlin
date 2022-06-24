@@ -180,7 +180,6 @@ template <typename Traits>
 void collectRootSet(typename Traits::MarkQueue& markQueue) noexcept {
     Traits::clear(markQueue);
     for (auto& thread : mm::GlobalData::Instance().threadRegistry().LockForIter()) {
-        // TODO: Maybe it's more efficient to do by the suspending thread?
         if (thread.suspensionData().marking()) continue;
         RuntimeLogDebug({kTagGC}, "Marking thread %d in GC thread", thread.threadId());
         thread.Publish();

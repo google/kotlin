@@ -62,14 +62,14 @@ NO_EXTERNAL_CALLS_CHECK void kotlin::mm::ThreadSuspensionData::suspendIfRequeste
         auto threadId = konan::currentThreadId();
         auto suspendStartMs = konan::getTimeMicros();
         RuntimeLogDebug({kTagGC, kTagMM}, "Suspending thread %d", threadId);
-        AutoReset scopedAssignMarking(&marking_, isMarkingRequested());
+        AutoReset scopedAssignMarking(&marking_, IsMarkingRequested());
         if (marking_) {
             auto& threadRegistry = kotlin::mm::ThreadRegistry::Instance();
             auto* currentThread = threadRegistry.CurrentThreadData();
             currentThread->Publish();
             {
                 std::unique_lock lock(gSuspensionMutex);
-                gSuspensionCondVar.wait(lock, []() { return !isMarkingRequested(); });
+                gSuspensionCondVar.wait(lock, []() { return !IsMarkingRequested(); });
             }
             RuntimeLogDebug({kTagGC, kTagMM}, "Marking in thread %d", threadId);
             currentThread->gc().Mark();
@@ -84,7 +84,7 @@ NO_EXTERNAL_CALLS_CHECK void kotlin::mm::ThreadSuspensionData::suspendIfRequeste
     }
 }
 
-NO_EXTERNAL_CALLS_CHECK bool kotlin::mm::RequestThreadsSuspension(bool markBeforeSuspending) noexcept {
+NO_EXTERNAL_CALLS_CHECK bool kotlin::mm::RequestThreadsSuspension(MarkingBehavior marking) noexcept {
     RuntimeAssert(gSuspensionRequestedByCurrentThread == false, "Current thread already suspended threads.");
     {
         std::unique_lock lock(gSuspensionMutex);
@@ -93,7 +93,7 @@ NO_EXTERNAL_CALLS_CHECK bool kotlin::mm::RequestThreadsSuspension(bool markBefor
         if (actual) {
             return false;
         }
-        internal::gMarkingRequested = markBeforeSuspending;
+        internal::gMarkingRequested = marking == MarkingBehavior::kMarkOwnStack;
     }
     gSuspensionRequestedByCurrentThread = true;
 
@@ -115,7 +115,9 @@ void kotlin::mm::WaitForThreadsReadyToMark() noexcept {
 }
 
 void kotlin::mm::WaitForThreadsMarking() noexcept {
-    RuntimeAssert(!isMarkingRequested(), "No new threads should be able to start marking while we wait");
+    RuntimeAssert(!IsMarkingRequested(), "No new threads should be able to start marking while we wait");
+    // Since marking can take a signifcant amount of time, we use a condition
+    // variable instead of spinning while we wait for them to complete.
     std::unique_lock lock(gSuspensionMutex);
     gMarkingCondVar.wait(lock, []() {
         return allThreads(isSuspendedOrNative);

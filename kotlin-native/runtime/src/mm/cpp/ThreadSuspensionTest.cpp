@@ -269,3 +269,43 @@ TEST_F(ThreadSuspensionTest, FileInitializationWithSuspend) {
         t.join();
     }
 }
+
+TEST_F(ThreadSuspensionTest, NativeThreadsWakingWhileMarking) {
+    ASSERT_THAT(collectThreadData(), testing::IsEmpty());
+    ASSERT_FALSE(mm::IsThreadSuspensionRequested());
+
+    for (size_t i = 0; i < kThreadCount; i++) {
+        threads.emplace_back([this, i] {
+            ScopedMemoryInit init;
+            auto* threadData = init.memoryState()->GetThreadData();
+            ASSERT_EQ(threadData->state(), ThreadState::kRunnable);
+            threadData->setState(ThreadState::kNative);
+            waitUntilCanStart(i);
+            threadData->setState(ThreadState::kRunnable);
+        });
+    }
+    waitUntilThreadsAreReady();
+
+    mm::RequestThreadsSuspension(mm::MarkingBehavior::kMarkOwnStack);
+    mm::WaitForThreadsReadyToMark();
+    for (auto* thread : collectThreadData()) {
+        ASSERT_FALSE(thread->suspensionData().marking());
+    }
+    mm::RequestThreadsStartMarking();
+    canStart = true;
+    bool allSuspended = false;
+    while (!allSuspended) {
+        allSuspended = true;
+        for (auto* thread : collectThreadData()) {
+            allSuspended &= thread->suspensionData().suspended();
+        }
+    }
+    for (auto* thread : collectThreadData()) {
+        ASSERT_FALSE(thread->suspensionData().marking());
+        ASSERT_TRUE(thread->suspensionData().suspended());
+    }
+    mm::ResumeThreads();
+    for (auto& t : threads) {
+        t.join();
+    }
+}

@@ -5,9 +5,8 @@
 
 #pragma once
 
-#include <cstddef>
-
 #include <atomic>
+#include <cstddef>
 
 #include "Allocator.hpp"
 #include "GCScheduler.hpp"
@@ -30,7 +29,6 @@ namespace gc {
 class FinalizerProcessor;
 
 // Stop-the-world mark + concurrent sweep. The GC runs in a separate thread, finalizers run in another thread of their own.
-// TODO: Also make mark concurrent.
 class ConcurrentMarkAndSweep : private Pinned {
 public:
     class ObjectData {
@@ -51,7 +49,6 @@ public:
                 return false;
             ObjectData* black = setPointerBits(before, static_cast<unsigned>(Color::kBlack));
             return next_.compare_exchange_strong(before, black);
-
         }
 
         ObjectData* next() const noexcept { return clearPointerBits(next_.load(), colorMask); }

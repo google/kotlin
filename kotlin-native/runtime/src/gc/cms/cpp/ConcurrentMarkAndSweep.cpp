@@ -146,7 +146,7 @@ bool gc::ConcurrentMarkAndSweep::FinalizersThreadIsRunning() noexcept {
 bool gc::ConcurrentMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
     RuntimeLogDebug({kTagGC}, "Attempt to suspend threads by thread %d", konan::currentThreadId());
     auto timeStartUs = konan::getTimeMicros();
-    bool didSuspend = mm::RequestThreadsSuspension(true);
+    bool didSuspend = mm::RequestThreadsSuspension(mm::MarkingBehavior::kMarkOwnStack);
     RuntimeAssert(didSuspend, "Only GC thread can request suspension");
     RuntimeLogDebug({kTagGC}, "Requested thread suspension by thread %d", konan::currentThreadId());
 

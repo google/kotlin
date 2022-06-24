@@ -25,7 +25,7 @@ inline bool IsThreadSuspensionRequested() noexcept {
     return internal::gSuspensionRequested.load();
 }
 
-inline bool isMarkingRequested() noexcept {
+inline bool IsMarkingRequested() noexcept {
     return internal::gMarkingRequested.load();
 }
 
@@ -64,7 +64,12 @@ private:
     void suspendIfRequestedSlowPath() noexcept;
 };
 
-bool RequestThreadsSuspension(bool markBeforeSuspending = false) noexcept;
+enum MarkingBehavior {
+    kMarkOwnStack,
+    kDoNotMark
+};
+
+bool RequestThreadsSuspension(MarkingBehavior doMark = MarkingBehavior::kDoNotMark) noexcept;
 void WaitForThreadsSuspension() noexcept;
 void SuspendIfRequestedSlowPath() noexcept;
 void SuspendIfRequested() noexcept;
