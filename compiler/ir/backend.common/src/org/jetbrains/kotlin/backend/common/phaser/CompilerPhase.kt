@@ -6,26 +6,18 @@
 package org.jetbrains.kotlin.backend.common.phaser
 
 import org.jetbrains.kotlin.backend.common.CommonBackendContext
-import kotlin.system.measureTimeMillis
+import java.nio.ByteBuffer
 
 class PhaserState<Data>(
     val alreadyDone: MutableSet<AnyNamedPhase> = mutableSetOf(),
-    var depth: Int = 0,
     var phaseCount: Int = 0,
     val stickyPostconditions: MutableSet<Checker<Data>> = mutableSetOf()
 ) {
-    fun copyOf() = PhaserState(alreadyDone.toMutableSet(), depth, phaseCount, stickyPostconditions)
+    fun copyOf() = PhaserState(alreadyDone.toMutableSet(), phaseCount, stickyPostconditions)
 }
 
 // Copy state, forgetting the sticky postconditions (which will not be applicable to the new type)
-fun <Input, Output> PhaserState<Input>.changeType() = PhaserState<Output>(alreadyDone, depth, phaseCount, mutableSetOf())
-
-inline fun <R, D> PhaserState<D>.downlevel(nlevels: Int, block: () -> R): R {
-    depth += nlevels
-    val result = block()
-    depth -= nlevels
-    return result
-}
+fun <Input, Output> PhaserState<Input>.changeType() = PhaserState<Output>(alreadyDone, phaseCount, mutableSetOf())
 
 interface CompilerPhase<in Context : CommonBackendContext, Input, Output> {
     fun invoke(phaseConfig: PhaseConfig, phaserState: PhaserState<Input>, context: Context, input: Input): Output
@@ -89,12 +81,8 @@ class NamedCompilerPhase<in Context : CommonBackendContext, Data>(
         context.inVerbosePhase = this in phaseConfig.verbose
 
         runBefore(phaseConfig, phaserState, context, input)
-        val output = if (phaseConfig.needProfiling) {
-            runAndProfile(phaseConfig, phaserState, context, input)
-        } else {
-            phaserState.downlevel(nlevels) {
-                lower.invoke(phaseConfig, phaserState, context, input)
-            }
+        val output = phaseConfig.profileIfNeeded(description) {
+            lower.invoke(phaseConfig, phaserState, context, input)
         }
         runAfter(phaseConfig, phaserState, context, output)
 
@@ -126,20 +114,30 @@ class NamedCompilerPhase<in Context : CommonBackendContext, Data>(
         }
     }
 
-    private fun runAndProfile(phaseConfig: PhaseConfig, phaserState: PhaserState<Data>, context: Context, source: Data): Data {
-        var result: Data? = null
-        val msec = measureTimeMillis {
-            result = phaserState.downlevel(nlevels) {
-                lower.invoke(phaseConfig, phaserState, context, source)
-            }
-        }
-        // TODO: use a proper logger
-        println("${"\t".repeat(phaserState.depth)}$description: $msec msec")
-        return result!!
-    }
-
     override fun getNamedSubphases(startDepth: Int): List<Pair<Int, NamedCompilerPhase<Context, *>>> =
         listOf(startDepth to this) + lower.getNamedSubphases(startDepth + nlevels)
 
     override fun toString() = "Compiler Phase @$name"
+}
+
+val profileStack = StringBuilder()
+var startTime = System.nanoTime()
+
+fun PhaseConfig.checkPoint() {
+    val time = System.nanoTime()
+    val duration = time - startTime
+    startTime = time
+    profilingOutput.println("$profileStack $duration")
+}
+
+inline fun <T> PhaseConfig.profileIfNeeded(name: String, block: () -> T): T {
+    if (!needProfiling) return block()
+    checkPoint()
+    val len = profileStack.length
+    if (len > 0) profileStack.append(';')
+    profileStack.append(name)
+    val ret = block()
+    checkPoint()
+    profileStack.setLength(len)
+    return ret
 }

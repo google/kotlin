@@ -285,6 +285,12 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
     var profilePhases: Boolean by FreezableVar(false)
 
     @Argument(
+        value = "-Xprofile-output-filename",
+        description = "File name for json output of profile of backend phases",
+    )
+    var profileOutputFilename: String? by FreezableVar(null)
+
+    @Argument(
         value = "-Xcheck-phase-conditions",
         description = "Check pre- and postconditions on phases"
     )

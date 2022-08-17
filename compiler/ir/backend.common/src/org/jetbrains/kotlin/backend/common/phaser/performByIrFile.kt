@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.declarations.name
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
@@ -59,13 +60,15 @@ private class PerformByIrFilePhase<Context : CommonBackendContext>(
         phaseConfig: PhaseConfig, phaserState: PhaserState<IrModuleFragment>, context: Context, input: IrModuleFragment
     ): IrModuleFragment {
         for (irFile in input.files) {
-            try {
-                val filePhaserState = phaserState.changeType<IrModuleFragment, IrFile>()
-                for (phase in lower) {
-                    phase.invoke(phaseConfig, filePhaserState, context, irFile)
+            phaseConfig.profileIfNeeded(irFile.name) {
+                try {
+                    val filePhaserState = phaserState.changeType<IrModuleFragment, IrFile>()
+                    for (phase in lower) {
+                        phase.invoke(phaseConfig, filePhaserState, context, irFile)
+                    }
+                } catch (e: Throwable) {
+                    CodegenUtil.reportBackendException(e, "IR lowering", irFile.fileEntry.name)
                 }
-            } catch (e: Throwable) {
-                CodegenUtil.reportBackendException(e, "IR lowering", irFile.fileEntry.name)
             }
         }
 

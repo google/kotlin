@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.backend.common.phaser
 
+import java.io.PrintStream
+
 fun CompilerPhase<*, *, *>.toPhaseMap(): MutableMap<String, AnyNamedPhase> =
     getNamedSubphases().fold(mutableMapOf()) { acc, (_, phase) ->
         check(phase.name !in acc) { "Duplicate phase name '${phase.name}'" }
@@ -23,6 +25,7 @@ class PhaseConfigBuilder(private val compoundPhase: CompilerPhase<*, *, *>) {
     val toValidateStateAfter = mutableSetOf<AnyNamedPhase>()
     val namesOfElementsExcludedFromDumping = mutableSetOf<String>()
     var needProfiling = false
+    var profilingOutput: PrintStream = System.out
     var checkConditions = false
     var checkStickyConditions = false
 
@@ -31,7 +34,7 @@ class PhaseConfigBuilder(private val compoundPhase: CompilerPhase<*, *, *>) {
         verbose, toDumpStateBefore, toDumpStateAfter, dumpToDirectory, dumpOnlyFqName,
         toValidateStateBefore, toValidateStateAfter,
         namesOfElementsExcludedFromDumping,
-        needProfiling, checkConditions, checkStickyConditions
+        needProfiling, profilingOutput, checkConditions, checkStickyConditions
     )
 }
 
@@ -48,6 +51,7 @@ class PhaseConfig(
     val toValidateStateAfter: Set<AnyNamedPhase> = emptySet(),
     val namesOfElementsExcludedFromDumping: Set<String> = emptySet(),
     val needProfiling: Boolean = false,
+    val profilingOutput: PrintStream = System.out,
     val checkConditions: Boolean = false,
     val checkStickyConditions: Boolean = false
 ) {
@@ -62,6 +66,7 @@ class PhaseConfig(
         it.toValidateStateAfter.addAll(toValidateStateAfter)
         it.namesOfElementsExcludedFromDumping.addAll(namesOfElementsExcludedFromDumping)
         it.needProfiling = needProfiling
+        it.profilingOutput = profilingOutput
         it.checkConditions = checkConditions
         it.checkStickyConditions = checkStickyConditions
     }

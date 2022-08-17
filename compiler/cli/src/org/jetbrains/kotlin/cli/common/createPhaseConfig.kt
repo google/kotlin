@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.backend.common.phaser.toPhaseMap
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import java.io.PrintStream
 
 fun createPhaseConfig(
     compoundPhase: CompilerPhase<*, *, *>,
@@ -40,6 +41,7 @@ fun createPhaseConfig(
     val namesOfElementsExcludedFromDumping = arguments.namesExcludedFromDumping?.toSet() ?: emptySet()
 
     val needProfiling = arguments.profilePhases
+    val profileOutput = arguments.profileOutputFilename.let { if (it == null) System.out else PrintStream(it) }
     val checkConditions = arguments.checkPhaseConditions
     val checkStickyConditions = arguments.checkStickyPhaseConditions
 
@@ -56,6 +58,7 @@ fun createPhaseConfig(
         toValidateStateAfter,
         namesOfElementsExcludedFromDumping,
         needProfiling,
+        profileOutput,
         checkConditions,
         checkStickyConditions
     ).also {
