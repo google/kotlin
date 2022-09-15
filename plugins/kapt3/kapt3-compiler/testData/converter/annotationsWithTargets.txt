@@ -1,5 +1,3 @@
-import java.lang.System;
-
 @kotlin.Metadata()
 @java.lang.annotation.Retention(value = java.lang.annotation.RetentionPolicy.RUNTIME)
 public abstract @interface Anno {
@@ -7,8 +5,6 @@ public abstract @interface Anno {
 
 ////////////////////
 
-
-import java.lang.System;
 
 @kotlin.Metadata()
 public final class Bar {
@@ -35,8 +31,6 @@ public final class Bar {
 ////////////////////
 
 
-import java.lang.System;
-
 @kotlin.Metadata()
 public final class Baz {
     @org.jetbrains.annotations.NotNull()
@@ -57,8 +51,6 @@ public final class Baz {
 ////////////////////
 
 
-import java.lang.System;
-
 @kotlin.Metadata()
 @java.lang.annotation.Target(value = {java.lang.annotation.ElementType.FIELD})
 @java.lang.annotation.Retention(value = java.lang.annotation.RetentionPolicy.RUNTIME)
@@ -68,8 +60,6 @@ public abstract @interface FieldAnno {
 
 ////////////////////
 
-
-import java.lang.System;
 
 @kotlin.Metadata()
 public final class Foo {
@@ -98,8 +88,6 @@ public final class Foo {
 ////////////////////
 
 
-import java.lang.System;
-
 @kotlin.Metadata()
 @java.lang.annotation.Target(value = {java.lang.annotation.ElementType.PARAMETER})
 @java.lang.annotation.Retention(value = java.lang.annotation.RetentionPolicy.RUNTIME)
@@ -109,8 +97,6 @@ public abstract @interface ParameterAnno {
 
 ////////////////////
 
-
-import java.lang.System;
 
 @kotlin.Metadata()
 @java.lang.annotation.Target(value = {})

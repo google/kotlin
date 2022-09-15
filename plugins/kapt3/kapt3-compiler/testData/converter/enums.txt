@@ -1,5 +1,3 @@
-import java.lang.System;
-
 @kotlin.Metadata()
 @java.lang.annotation.Retention(value = java.lang.annotation.RetentionPolicy.RUNTIME)
 public abstract @interface Anno1 {
@@ -9,8 +7,6 @@ public abstract @interface Anno1 {
 
 ////////////////////
 
-
-import java.lang.System;
 
 @kotlin.Metadata()
 public enum Enum1 {
@@ -23,8 +19,6 @@ public enum Enum1 {
 
 ////////////////////
 
-
-import java.lang.System;
 
 @kotlin.Metadata()
 public enum Enum2 {
@@ -62,8 +56,6 @@ public enum Enum2 {
 
 ////////////////////
 
-
-import java.lang.System;
 
 @kotlin.Metadata()
 public enum Nested1 {
