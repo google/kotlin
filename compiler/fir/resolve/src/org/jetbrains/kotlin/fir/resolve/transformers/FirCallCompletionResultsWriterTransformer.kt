@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fakeElement
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.declarations.builder.buildAnonymousFunctionCopy
 import org.jetbrains.kotlin.fir.declarations.utils.isInline
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
@@ -18,6 +19,8 @@ import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.impl.FirPropertyAccessExpressionImpl
+import org.jetbrains.kotlin.fir.extensions.FirAnonymousFunctionTransformerExtension
+import org.jetbrains.kotlin.fir.extensions.constructFunctionalTypeRefWithExtensions
 import org.jetbrains.kotlin.fir.references.FirNamedReference
 import org.jetbrains.kotlin.fir.references.builder.buildErrorNamedReference
 import org.jetbrains.kotlin.fir.references.builder.buildResolvedCallableReference
@@ -27,15 +30,14 @@ import org.jetbrains.kotlin.fir.resolve.calls.Candidate
 import org.jetbrains.kotlin.fir.resolve.calls.FirErrorReferenceWithCandidate
 import org.jetbrains.kotlin.fir.resolve.calls.FirNamedReferenceWithCandidate
 import org.jetbrains.kotlin.fir.resolve.dfa.FirDataFlowAnalyzer
-import org.jetbrains.kotlin.fir.resolve.diagnostics.*
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeConstraintSystemHasContradiction
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeInapplicableCandidateError
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConePropertyAsOperator
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeTypeParameterInQualifiedAccess
 import org.jetbrains.kotlin.fir.resolve.inference.ResolvedLambdaAtom
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.*
-import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirArrayOfCallTransformer
-import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.remapArgumentsWithVararg
-import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
-import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.writeResultType
 import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperator
 import org.jetbrains.kotlin.fir.scopes.impl.isWrappedIntegerOperatorForUnsignedType
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
@@ -69,7 +71,8 @@ class FirCallCompletionResultsWriterTransformer(
     private val dataFlowAnalyzer: FirDataFlowAnalyzer<*>,
     private val integerOperatorApproximator: IntegerLiteralAndOperatorApproximationTransformer,
     private val context: BodyResolveContext,
-    private val mode: Mode = Mode.Normal
+    private val anonymousFunctionTransformerExtensions: List<FirAnonymousFunctionTransformerExtension>,
+    private val mode: Mode = Mode.Normal,
 ) : FirAbstractTreeTransformer<ExpectedArgumentType?>(phase = FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE) {
 
     private val declarationWriter by lazy { FirDeclarationCompletionResultsWriter(finalSubstitutor, typeApproximator, session.typeContext) }
@@ -603,7 +606,7 @@ class FirCallCompletionResultsWriterTransformer(
                             functionType.typeArguments.last() as ConeKotlinType,
                             functionType.classId?.relativeClassName?.asString()
                                 ?.startsWith(FunctionClassKind.SuspendFunction.classNamePrefix) == true
-                        )
+                        ).withCombinedAttributesFrom(functionType)
                     }
                 }
                 else -> null
@@ -611,46 +614,58 @@ class FirCallCompletionResultsWriterTransformer(
         }
 
         var needUpdateLambdaType = false
+        var lambda = anonymousFunction
+        if (expectedType != null) {
+            val extraAnnotations = anonymousFunctionTransformerExtensions.flatMap {
+                it.getInferredAnnotationsForAnonymousFunction(anonymousFunction, expectedType)
+            }
+            if (extraAnnotations.isNotEmpty()) {
+                lambda = buildAnonymousFunctionCopy(anonymousFunction) {
+                    annotations += extraAnnotations
+                }
+            }
+        }
 
-        val initialReceiverType = anonymousFunction.receiverTypeRef?.coneTypeSafe<ConeKotlinType>()
+        val initialReceiverType = lambda.receiverTypeRef?.coneTypeSafe<ConeKotlinType>()
         val resultReceiverType = initialReceiverType?.let { finalSubstitutor.substituteOrNull(it) }
         if (resultReceiverType != null) {
-            anonymousFunction.replaceReceiverTypeRef(anonymousFunction.receiverTypeRef!!.resolvedTypeFromPrototype(resultReceiverType))
+            lambda.replaceReceiverTypeRef(lambda.receiverTypeRef!!.resolvedTypeFromPrototype(resultReceiverType))
             needUpdateLambdaType = true
         }
 
-        val initialType = anonymousFunction.returnTypeRef.coneTypeSafe<ConeKotlinType>()
+        val initialType = lambda.returnTypeRef.coneTypeSafe<ConeKotlinType>()
 
-        val finalType = if (anonymousFunction.isLambda) {
+        val finalType = if (lambda.isLambda) {
             expectedType?.returnType(session) as? ConeClassLikeType
-                ?: (data as? ExpectedArgumentType.ArgumentsMap)?.lambdasReturnTypes?.get(anonymousFunction)
+                ?: (data as? ExpectedArgumentType.ArgumentsMap)?.lambdasReturnTypes?.get(lambda)
                 ?: initialType?.let(finalSubstitutor::substituteOrSelf)
         } else {
             initialType?.let(finalSubstitutor::substituteOrSelf)
                 ?: expectedType?.returnType(session) as? ConeClassLikeType
-                ?: (data as? ExpectedArgumentType.ArgumentsMap)?.lambdasReturnTypes?.get(anonymousFunction)
+                ?: (data as? ExpectedArgumentType.ArgumentsMap)?.lambdasReturnTypes?.get(lambda)
         }
 
         if (finalType != null) {
-            val resultType = anonymousFunction.returnTypeRef.withReplacedConeType(finalType)
-            anonymousFunction.transformReturnTypeRef(StoreType, resultType)
+            val resultType = lambda.returnTypeRef.withReplacedConeType(finalType)
+            lambda.transformReturnTypeRef(StoreType, resultType)
             needUpdateLambdaType = true
         }
 
         if (needUpdateLambdaType) {
             val resolvedTypeRef =
-                anonymousFunction.constructFunctionalTypeRef(
+                lambda.constructFunctionalTypeRefWithExtensions(
                     isSuspend = expectedType?.isSuspendFunctionType(session) == true ||
-                            (expectedType == null && anonymousFunction.isSuspendFunctionType())
+                            (expectedType == null && lambda.isSuspendFunctionType()),
+                    extensions = anonymousFunctionTransformerExtensions
                 )
-            anonymousFunction.replaceTypeRef(resolvedTypeRef)
-            session.lookupTracker?.recordTypeResolveAsLookup(resolvedTypeRef, anonymousFunction.source, context.file.source)
+            lambda.replaceTypeRef(resolvedTypeRef)
+            session.lookupTracker?.recordTypeResolveAsLookup(resolvedTypeRef, lambda.source, context.file.source)
         }
 
-        val result = transformElement(anonymousFunction, null)
+        val result = transformElement(lambda, null)
 
         val returnExpressionsOfAnonymousFunction: Collection<FirStatement> =
-            dataFlowAnalyzer.returnExpressionsOfAnonymousFunction(anonymousFunction)
+            dataFlowAnalyzer.returnExpressionsOfAnonymousFunction(lambda)
         for (expression in returnExpressionsOfAnonymousFunction) {
             expression.transform<FirElement, ExpectedArgumentType?>(this, finalType?.toExpectedType())
         }
@@ -663,11 +678,14 @@ class FirCallCompletionResultsWriterTransformer(
             val newReturnTypeRef = result.returnTypeRef.withReplacedConeType(lastExpressionType)
             result.replaceReturnTypeRef(newReturnTypeRef)
             val resolvedTypeRef =
-                result.constructFunctionalTypeRef(isSuspend = expectedType?.isSuspendFunctionType(session) == true)
+                result.constructFunctionalTypeRefWithExtensions(
+                    isSuspend = expectedType?.isSuspendFunctionType(session) == true,
+                    extensions = anonymousFunctionTransformerExtensions
+                )
             result.replaceTypeRef(resolvedTypeRef)
             session.lookupTracker?.let {
-                it.recordTypeResolveAsLookup(newReturnTypeRef, anonymousFunction.source, context.file.source)
-                it.recordTypeResolveAsLookup(resolvedTypeRef, anonymousFunction.source, context.file.source)
+                it.recordTypeResolveAsLookup(newReturnTypeRef, lambda.source, context.file.source)
+                it.recordTypeResolveAsLookup(resolvedTypeRef, lambda.source, context.file.source)
             }
         }
 

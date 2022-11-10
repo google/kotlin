@@ -83,13 +83,6 @@ fun FirFunction.constructFunctionalType(isSuspend: Boolean = false): ConeLookupT
     )
 }
 
-fun FirFunction.constructFunctionalTypeRef(isSuspend: Boolean = false): FirResolvedTypeRef {
-    return buildResolvedTypeRef {
-        source = this@constructFunctionalTypeRef.source?.fakeElement(KtFakeSourceElementKind.ImplicitTypeRef)
-        type = constructFunctionalType(isSuspend)
-    }
-}
-
 fun createFunctionalType(
     parameters: List<ConeKotlinType>,
     receiverType: ConeKotlinType?,

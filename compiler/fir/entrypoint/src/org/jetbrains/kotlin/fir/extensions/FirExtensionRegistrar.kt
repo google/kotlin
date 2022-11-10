@@ -30,6 +30,7 @@ abstract class FirExtensionRegistrar : FirExtensionRegistrarAdapter() {
             FirExtensionSessionComponent::class,
             FirSamConversionTransformerExtension::class,
             FirAssignExpressionAltererExtension::class,
+            FirAnonymousFunctionTransformerExtension::class,
         )
     }
 
@@ -83,6 +84,11 @@ abstract class FirExtensionRegistrar : FirExtensionRegistrarAdapter() {
             registerExtension(FirAssignExpressionAltererExtension::class, this)
         }
 
+        @JvmName("plusAnonymousFunctionTransformerExtension")
+        operator fun (FirAnonymousFunctionTransformerExtension.Factory).unaryPlus() {
+            registerExtension(FirAnonymousFunctionTransformerExtension::class, this)
+        }
+
         // ------------------ reference methods ------------------
 
         @JvmName("plusStatusTransformerExtension")
@@ -128,6 +134,11 @@ abstract class FirExtensionRegistrar : FirExtensionRegistrarAdapter() {
         @JvmName("plusAssignExpressionAltererExtension")
         operator fun ((FirSession) -> FirAssignExpressionAltererExtension).unaryPlus() {
             FirAssignExpressionAltererExtension.Factory { this.invoke(it) }.unaryPlus()
+        }
+
+        @JvmName("plusAnonymousFunctionTransformerExtension")
+        operator fun ((FirSession) -> FirAnonymousFunctionTransformerExtension).unaryPlus() {
+            FirAnonymousFunctionTransformerExtension.Factory { this.invoke(it) }.unaryPlus()
         }
 
         // ------------------ utilities ------------------

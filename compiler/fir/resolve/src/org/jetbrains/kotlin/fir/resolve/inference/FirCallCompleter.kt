@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.declarations.builder.buildContextReceiver
 import org.jetbrains.kotlin.fir.declarations.builder.buildValueParameter
 import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.extensions.anonymousFunctionTransformerExtensions
+import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.expectedType
@@ -50,6 +52,9 @@ class FirCallCompleter(
     private val session = components.session
     private val inferenceSession
         get() = transformer.context.inferenceSession
+
+    private val anonymousFunctionsTransformerExtensions =
+        session.extensionService.anonymousFunctionTransformerExtensions
 
     val completer = ConstraintSystemCompleter(components, transformer.context)
 
@@ -130,7 +135,8 @@ class FirCallCompleter(
                             session.typeApproximator,
                             components.dataFlowAnalyzer,
                             components.integerLiteralAndOperatorApproximationTransformer,
-                            components.context
+                            components.context,
+                            anonymousFunctionsTransformerExtensions
                         ),
                         null
                     )
@@ -243,6 +249,7 @@ class FirCallCompleter(
             components.dataFlowAnalyzer,
             components.integerLiteralAndOperatorApproximationTransformer,
             components.context,
+            anonymousFunctionsTransformerExtensions,
             mode
         )
     }

@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildReturnExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildUnitExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirLazyBlock
+import org.jetbrains.kotlin.fir.extensions.*
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.calls.FirNamedReferenceWithCandidate
@@ -53,6 +54,8 @@ import org.jetbrains.kotlin.name.Name
 
 open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransformer) : FirPartialBodyResolveTransformer(transformer) {
     private val statusResolver: FirStatusResolver = FirStatusResolver(session, scopeSession)
+
+    private val anonymousFunctionTransformerExtensions = session.extensionService.anonymousFunctionTransformerExtensions
 
     private fun FirDeclaration.visibilityForApproximation(): Visibility {
         val container = context.containers.getOrNull(context.containers.size - 2)
@@ -810,6 +813,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
         }
         val returnTypeRefFromResolvedAtom =
             resolvedLambdaAtom?.returnType?.let { lambda.returnTypeRef.resolvedTypeFromPrototype(it) }
+
         lambda = buildAnonymousFunctionCopy(lambda) {
             receiverTypeRef = lambda.receiverTypeRef?.takeIf { it !is FirImplicitTypeRef }
                 ?: resolvedLambdaAtom?.receiver?.let { lambda.receiverTypeRef?.resolvedTypeFromPrototype(it) }
@@ -831,6 +835,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
             returnTypeRef = (lambda.returnTypeRef as? FirResolvedTypeRef)
                 ?: returnTypeRefFromResolvedAtom
                         ?: lambda.returnTypeRef
+
         }
         lambda = lambda.transformValueParameters(ImplicitToErrorTypeTransformer, null)
         val bodyExpectedType = returnTypeRefFromResolvedAtom ?: expectedTypeRef
@@ -847,9 +852,10 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
             session.typeApproximator,
             dataFlowAnalyzer,
             components.integerLiteralAndOperatorApproximationTransformer,
-            components.context
+            components.context,
+            anonymousFunctionTransformerExtensions
         )
-        lambda.transformSingle(writer, expectedTypeRef.coneTypeSafe<ConeKotlinType>()?.toExpectedType())
+        lambda = lambda.transformSingle(writer, expectedTypeRef.coneTypeSafe<ConeKotlinType>()?.toExpectedType())
 
         val returnStatements = dataFlowAnalyzer.returnExpressionsOfAnonymousFunction(lambda)
         val returnExpressionsExceptLast =
@@ -883,8 +889,9 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
             }
         )
         lambda.replaceTypeRef(
-            lambda.constructFunctionalTypeRef(
-                isSuspend = expectedTypeRef.coneTypeSafe<ConeKotlinType>()?.isSuspendFunctionType(session) == true
+            lambda.constructFunctionalTypeRefWithExtensions(
+                isSuspend = expectedTypeRef.coneTypeSafe<ConeKotlinType>()?.isSuspendFunctionType(session) == true,
+                extensions = anonymousFunctionTransformerExtensions
             ).also {
                 session.lookupTracker?.recordTypeResolveAsLookup(it, lambda.source, components.file.source)
             }
