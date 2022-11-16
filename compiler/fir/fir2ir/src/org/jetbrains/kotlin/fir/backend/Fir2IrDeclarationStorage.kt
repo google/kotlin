@@ -892,7 +892,7 @@ class Fir2IrDeclarationStorage(
                             createBackingField(
                                 property, IrDeclarationOrigin.PROPERTY_DELEGATE,
                                 components.visibilityConverter.convertToDescriptorVisibility(property.fieldVisibility),
-                                Name.identifier("${property.name}\$delegate"), true, delegate
+                                SpecialNames.propertyDelegateName(property.name), true, delegate
                             )
                         } else {
                             val initializer = property.backingField?.initializer ?: property.initializer
@@ -1012,7 +1012,7 @@ class Fir2IrDeclarationStorage(
 
     fun getCachedIrField(field: FirField): IrField? = fieldCache[field]
 
-    fun createIrFieldAndDelegatedMembers(field: FirField, owner: FirClass, irClass: IrClass): IrField? {
+    fun createIrFieldAndDelegatedMembers(field: FirField, owner: FirClass, irClass: IrClass) {
         // Either take a corresponding constructor property backing field,
         // or create a separate delegate field
         val irField = getOrCreateDelegateIrField(field, owner, irClass)
@@ -1020,8 +1020,6 @@ class Fir2IrDeclarationStorage(
         if (owner.isLocalClassOrAnonymousObject()) {
             delegatedMemberGenerator.generateBodies()
         }
-        // If it's a property backing field, it should not be added to the class in Fir2IrConverter, so it's not returned
-        return irField.takeIf { it.correspondingPropertySymbol == null }
     }
 
     private fun getOrCreateDelegateIrField(field: FirField, owner: FirClass, irClass: IrClass): IrField {
@@ -1041,13 +1039,14 @@ class Fir2IrDeclarationStorage(
                 }
             }
         }
-        val irField = createIrField(
+        return createIrField(
             field,
             typeRef = initializer?.typeRef ?: field.returnTypeRef,
             origin = IrDeclarationOrigin.DELEGATE
-        )
-        irField.setAndModifyParent(irClass)
-        return irField
+        ).apply {
+            parent = irClass
+            irClass.declarations += this
+        }
     }
 
     private fun createIrField(
@@ -1204,7 +1203,7 @@ class Fir2IrDeclarationStorage(
             enterScope(this)
             delegate = declareIrVariable(
                 startOffset, endOffset, IrDeclarationOrigin.PROPERTY_DELEGATE,
-                Name.identifier("${property.name}\$delegate"), property.delegate!!.typeRef.toIrType(),
+                SpecialNames.propertyDelegateName(property.name), property.delegate!!.typeRef.toIrType(),
                 isVar = false, isConst = false, isLateinit = false
             )
             delegate.parent = irParent
