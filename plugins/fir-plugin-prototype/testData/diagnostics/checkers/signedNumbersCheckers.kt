@@ -1,9 +1,14 @@
+// MODULE: lib
 import org.jetbrains.kotlin.fir.plugin.Positive
 import org.jetbrains.kotlin.fir.plugin.Negative
 
 fun takePositive(x: @Positive Number) {}
 fun takeNegative(x: @Negative Number) {}
 fun takeAny(x: Number) {}
+
+// MODULE: test(lib)
+import org.jetbrains.kotlin.fir.plugin.Positive
+import org.jetbrains.kotlin.fir.plugin.Negative
 
 fun <K> id(x: K): K = x
 fun <K> select(x: K, y: K): K = x
