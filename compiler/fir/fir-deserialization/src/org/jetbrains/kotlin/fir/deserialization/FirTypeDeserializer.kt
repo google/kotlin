@@ -6,13 +6,16 @@
 package org.jetbrains.kotlin.fir.deserialization
 
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
+import org.jetbrains.kotlin.builtins.functions.isBasicFunctionOrKFunction
 import org.jetbrains.kotlin.fir.FirModuleData
+import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.computeTypeAttributes
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameterRefsOwner
 import org.jetbrains.kotlin.fir.declarations.builder.FirTypeParameterBuilder
 import org.jetbrains.kotlin.fir.declarations.utils.addDefaultBoundIfNecessary
+import org.jetbrains.kotlin.fir.diagnostics.ConeAmbiguousFunctionTypeKinds
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.resolve.toSymbol
@@ -172,17 +175,57 @@ class FirTypeDeserializer(
         }
         if (constructor !is ConeClassLikeLookupTag) return null
 
+        proto.abbreviatedType(typeTable)?.let {
+            return simpleType(it, attributes)
+        }
+
         fun ProtoBuf.Type.collectAllArguments(): List<ProtoBuf.Type.Argument> =
             argumentList + outerType(typeTable)?.collectAllArguments().orEmpty()
 
         val arguments = proto.collectAllArguments().map(this::typeArgument).toTypedArray()
-        val simpleType = if (Flags.SUSPEND_TYPE.get(proto.flags)) {
-            createSuspendFunctionType(constructor, arguments, isNullable = proto.nullable, attributes)
-        } else {
-            ConeClassLikeTypeImpl(constructor, arguments, isNullable = proto.nullable, attributes)
+        if (Flags.SUSPEND_TYPE.get(proto.flags)) {
+            return createSuspendFunctionType(constructor, arguments, isNullable = proto.nullable, attributes)
         }
-        val abbreviatedTypeProto = proto.abbreviatedType(typeTable) ?: return simpleType
-        return simpleType(abbreviatedTypeProto, attributes)
+
+        if (attributes.customAnnotations.isNotEmpty()) {
+            val kind = constructor.functionTypeKind(moduleData.session)
+            if (kind != null && kind.isBasicFunctionOrKFunction) {
+                createCustomFunctionType(arguments, isReflectType = kind.isReflectType, isNullable = proto.nullable, attributes)?.let {
+                    return it
+                }
+            }
+        }
+
+        return ConeClassLikeTypeImpl(constructor, arguments, isNullable = proto.nullable, attributes)
+    }
+
+    private fun createCustomFunctionType(
+        arguments: Array<ConeTypeProjection>,
+        isReflectType: Boolean,
+        isNullable: Boolean,
+        attributes: ConeAttributes
+    ): ConeClassLikeType? {
+        val functionKinds = moduleData.session.functionTypeService.extractAllSpecialKindsForTypeAnnotations(attributes.customAnnotations)
+        if (functionKinds.isEmpty()) {
+            return null
+        }
+        if (functionKinds.size > 1) {
+            return ConeErrorType(
+                diagnostic = ConeAmbiguousFunctionTypeKinds(functionKinds.map { if (isReflectType) it.reflectKind() else it }),
+                typeArguments = arguments,
+                attributes = attributes
+            )
+        }
+
+        val kind = functionKinds.single().let {
+            if (isReflectType) it.reflectKind() else it
+        }
+        return ConeClassLikeTypeImpl(
+            kind.numberedClassId(arguments.size).toLookupTag(),
+            arguments,
+            isNullable,
+            attributes
+        )
     }
 
     private fun createSuspendFunctionTypeForBasicCase(

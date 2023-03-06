@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.builtins.functions.FunctionTypeKindExtractor
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.toAnnotationClassId
 import org.jetbrains.kotlin.fir.declarations.utils.isSuspend
+import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.extensions.FirFunctionTypeKindExtension
 import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.extensions.functionTypeKindExtensions
@@ -73,6 +74,10 @@ class FirFunctionTypeKindServiceImpl(private val session: FirSession) : FirFunct
 
     override fun extractAllSpecialKindsForFunctionTypeRef(typeRef: FirFunctionTypeRef): List<FunctionTypeKind> {
         return extractSpecialKindsImpl(typeRef, { isSuspend }, { annotations.mapNotNull { it.toAnnotationClassId(session) } })
+    }
+
+    override fun extractAllSpecialKindsForTypeAnnotations(annotations: List<FirAnnotation>): List<FunctionTypeKind> {
+        return extractSpecialKindsImpl(annotations, { false }, { mapNotNull { it.toAnnotationClassId(session) } })
     }
 
     private inline fun <T> extractSpecialKindsImpl(
