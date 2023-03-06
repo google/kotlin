@@ -1,0 +1,21 @@
+Module: lib
+FILE: lib.kt
+    public final fun f(block: R|() -> kotlin/Unit|): R|kotlin/Unit| {
+    }
+Module: main
+FILE: test.kt
+    public final fun test(): R|kotlin/Unit| {
+        lval l0: R|() -> kotlin/Unit| = fun <anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+            ^ Unit
+        }
+
+        R|/f|(R|<local>/l0|)
+        R|/f<Inapplicable(INAPPLICABLE): /f>#|(@R|org/jetbrains/kotlin/fir/plugin/MyComposable|() f@fun <anonymous>(): R|kotlin/Unit| <inline=Unknown>  {
+            ^@f Unit
+        }
+        )
+        R|/f|(<L> = f@fun <anonymous>(): R|kotlin/Unit| <inline=NoInline>  {
+            ^@f Unit
+        }
+        )
+    }

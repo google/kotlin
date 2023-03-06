@@ -62,6 +62,12 @@ public class FirPsiPluginDiagnosticTestGenerated extends AbstractFirPsiPluginDia
         }
 
         @Test
+        @TestMetadata("backwardsCompatibility.kt")
+        public void testBackwardsCompatibility() throws Exception {
+            runTest("plugins/fir-plugin-prototype/testData/diagnostics/functionalTypes/backwardsCompatibility.kt");
+        }
+
+        @Test
         @TestMetadata("inference.kt")
         public void testInference() throws Exception {
             runTest("plugins/fir-plugin-prototype/testData/diagnostics/functionalTypes/inference.kt");

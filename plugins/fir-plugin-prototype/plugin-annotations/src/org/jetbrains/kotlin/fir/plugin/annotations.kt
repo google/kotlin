@@ -34,8 +34,8 @@ annotation class SupertypeWithTypeArgument(val kClass: KClass<*>)
 
 annotation class MetaSupertype
 
-@Target(AnnotationTarget.FUNCTION, AnnotationTarget.TYPE, AnnotationTarget.EXPRESSION)
-@Retention(AnnotationRetention.SOURCE)
+@Target(AnnotationTarget.FUNCTION, AnnotationTarget.TYPE)
+@Retention(AnnotationRetention.BINARY)
 annotation class MyComposable
 
 annotation class AllPropertiesConstructor
