@@ -196,7 +196,9 @@ class ModuleStructureExtractorImpl(
                 ModuleStructureDirectives.DEPENDENCY,
                 ModuleStructureDirectives.DEPENDS_ON -> {
                     val name = values.first() as String
-                    val kind = values.getOrNull(1)?.let { valueOfOrNull(it as String) } ?: defaultsProvider.defaultDependencyKind
+                    val kind = values.getOrNull(1)?.let {
+                        DependencyKind.valueOf(it as String)
+                    } ?: defaultsProvider.defaultDependencyKind
                     val relation = when (directive) {
                         ModuleStructureDirectives.DEPENDENCY -> DependencyRelation.RegularDependency
                         ModuleStructureDirectives.DEPENDS_ON -> DependencyRelation.DependsOnDependency
