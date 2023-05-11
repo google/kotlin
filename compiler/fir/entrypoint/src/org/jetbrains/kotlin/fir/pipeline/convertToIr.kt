@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.util.IdSignatureComposer
 import org.jetbrains.kotlin.ir.util.KotlinMangler
+import org.jetbrains.kotlin.ir.visitors.acceptVoid
 
 data class FirResult(val outputs: List<ModuleCompilerAnalyzedOutput>)
 
@@ -107,7 +108,7 @@ fun FirResult.convertToIrAndActualize(
                 it.convertToIr(
                     fir2IrExtensions,
                     fir2IrConfiguration,
-                    irGeneratorExtensions,
+                    listOf(),  // Wait until after actualization with running IrGenerationExtensions.
                     commonMemberStorage = commonMemberStorage,
                     irBuiltIns = irBuiltIns,
                     irMangler,
@@ -123,7 +124,7 @@ fun FirResult.convertToIrAndActualize(
             fir2IrResult = platformOutput.convertToIr(
                 fir2IrExtensions,
                 fir2IrConfiguration,
-                irGeneratorExtensions,
+                listOf(),  // Wait until after actualization with running IrGenerationExtensions.
                 commonMemberStorage = commonMemberStorage,
                 irBuiltIns = irBuiltIns!!,
                 irMangler,
@@ -138,6 +139,15 @@ fun FirResult.convertToIrAndActualize(
                 commonIrOutputs.map { it.irModuleFragment },
                 diagnosticReporter,
                 fir2IrConfiguration.languageVersionSettings
+            )
+
+            // Run IR generator extensions after actualization so that they have access to the
+            // entire actualized definition including default arguments.
+            for (extension in irGeneratorExtensions) {
+                extension.generate(fir2IrResult.irModuleFragment, fir2IrResult.pluginContext)
+            }
+            fir2IrResult.irModuleFragment.acceptVoid(
+                ExternalPackageParentPatcher(fir2IrResult.components, fir2IrExtensions)
             )
         }
     }

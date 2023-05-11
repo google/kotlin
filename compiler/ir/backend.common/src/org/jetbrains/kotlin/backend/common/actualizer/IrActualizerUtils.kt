@@ -11,12 +11,12 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.symbols.IrSymbol
-import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
+import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.IrDynamicType
 import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.util.hasAnnotation
+import org.jetbrains.kotlin.ir.util.hasEqualFqName
 import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.module
 import org.jetbrains.kotlin.name.FqName
@@ -51,14 +51,14 @@ private fun IrFunction.match(actualFunction: IrFunction, expectActualTypesMap: M
     fun getActualizedTypeClassifierSymbol(
         expectParameter: IrValueParameter,
         localTypeParametersMap: Map<IrTypeParameterSymbol, IrTypeParameterSymbol>? = null
-    ): IrSymbol {
+    ): IrClassifierSymbol {
         return expectParameter.type.classifierOrFail.let {
             val localMappedSymbol = if (localTypeParametersMap != null && it is IrTypeParameterSymbol) {
                 localTypeParametersMap[it]
             } else {
                 null
             }
-            localMappedSymbol ?: expectActualTypesMap[it] ?: it
+            localMappedSymbol ?: expectActualTypesMap[it] as? IrClassifierSymbol ?: it
         }
     }
 
@@ -85,12 +85,14 @@ private fun IrFunction.match(actualFunction: IrFunction, expectActualTypesMap: M
             return false
         }
 
-        if (getActualizedTypeClassifierSymbol(expectParameter, localTypeParametersMap) !=
-            getActualizedTypeClassifierSymbol(actualParameter)
-        ) {
+        val expectClassifierSymbol = getActualizedTypeClassifierSymbol(expectParameter, localTypeParametersMap)
+        val actualClassifierSymbol = getActualizedTypeClassifierSymbol(actualParameter)
+        if (expectClassifierSymbol != actualClassifierSymbol) {
+            if (expectClassifierSymbol is IrClassSymbol && actualClassifierSymbol is IrClassSymbol) {
+                return expectClassifierSymbol.owner.kotlinFqName == actualClassifierSymbol.owner.kotlinFqName
+            }
             return false
         }
-
         return true
     }
 
