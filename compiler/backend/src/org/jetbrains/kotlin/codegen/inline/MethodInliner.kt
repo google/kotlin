@@ -480,16 +480,16 @@ class MethodInliner(
             override fun visitLocalVariable(
                 name: String, desc: String, signature: String?, start: Label, end: Label, index: Int
             ) {
-                if (isInliningLambda || GENERATE_DEBUG_INFO) {
-                    val isInlineFunctionMarker = name.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)
-                    val varSuffix = when {
-                        inliningContext.isRoot && !isInlineFunctionMarker -> INLINE_FUN_VAR_SUFFIX
-                        else -> ""
+                if (!isInliningLambda && !GENERATE_DEBUG_INFO) return
+                val isInlineFunctionMarker = name.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)
+                val newName = when {
+                    inliningContext.isRoot && !isInlineFunctionMarker && name == AsmUtil.THIS -> {
+                        AsmUtil.INLINE_DECLARATION_SITE_THIS
                     }
+					else -> name
+				}
 
-                    val varName = if (varSuffix.isNotEmpty() && name == AsmUtil.THIS) AsmUtil.INLINE_DECLARATION_SITE_THIS else name
-                    super.visitLocalVariable(varName + varSuffix, desc, signature, start, end, getNewIndex(index))
-                }
+				super.visitLocalVariable(newName, desc, signature, start, end, getNewIndex(index))
             }
         }
 
