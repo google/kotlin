@@ -150,6 +150,7 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
     public final Map<KtElement, StackValue> tempVariables = new HashMap<>();
 
     private int myLastLineNumber = -1;
+    private int myInlineScopes = 0;
     private boolean shouldMarkLineNumbers = true;
     private int finallyDepth = 0;
 
@@ -1575,6 +1576,16 @@ public class ExpressionCodegen extends KtVisitor<StackValue, StackValue> impleme
     @Override
     public int getLastLineNumber() {
         return myLastLineNumber;
+    }
+
+    @Override
+    public int getInlinedScopes() {
+        return myInlineScopes;
+    }
+
+    @Override
+    public void setInlinedScopes(int num) {
+        myInlineScopes = num;
     }
 
     private boolean doFinallyOnReturn(@NotNull Label afterReturnLabel, @NotNull List<TryBlockStackElement> nestedTryBlocksWithoutFinally) {

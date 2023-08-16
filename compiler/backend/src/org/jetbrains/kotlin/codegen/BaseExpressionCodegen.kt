@@ -36,6 +36,8 @@ interface BaseExpressionCodegen {
 
     val lastLineNumber: Int
 
+    var inlinedScopes: Int
+
     fun propagateChildReifiedTypeParametersUsages(reifiedTypeParametersUsages: ReifiedTypeParametersUsages)
 
     fun markLineNumberAfterInlineIfNeeded(registerLineNumberAfterwards: Boolean)

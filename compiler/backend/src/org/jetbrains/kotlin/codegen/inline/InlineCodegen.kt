@@ -9,9 +9,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.codegen.*
 import org.jetbrains.kotlin.codegen.AsmUtil.isPrimitive
 import org.jetbrains.kotlin.codegen.state.GenerationState
-import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.descriptors.ParameterDescriptor
-import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodSignature
 import org.jetbrains.kotlin.types.KotlinType
@@ -102,6 +100,7 @@ abstract class InlineCodegen<out T : BaseExpressionCodegen>(
             state, codegen.inlineNameGenerator.subGenerator(jvmSignature.asmMethod.name),
             sourceCompiler, sourceCompiler.inlineCallSiteInfo, reifiedTypeInliner, typeParameterMappings
         )
+        info.inlinedScopes = codegen.inlinedScopes
 
         val sourceMapper = sourceCompiler.sourceMapper
         val sourceInfo = sourceMapper.sourceInfo!!
@@ -121,6 +120,7 @@ abstract class InlineCodegen<out T : BaseExpressionCodegen>(
 
         val result = inliner.doInline(adapter, remapper, true, mapOf())
         result.reifiedTypeParametersUsages.mergeAll(reificationResult)
+        codegen.inlinedScopes = info.inlinedScopes
 
         val infos = MethodInliner.processReturns(adapter, sourceCompiler.getContextLabels(), null)
         generateAndInsertFinallyBlocks(

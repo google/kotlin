@@ -44,6 +44,8 @@ open class InliningContext(
     val isInliningLambda
         get() = lambdaInfo != null
 
+    var inlinedScopes = 0
+
     // Consider this arrangement:
     //     inline fun <reified T> f(x: () -> Unit = { /* uses `T` in a local class */ }) = x()
     //     inline fun <reified V> g() = f<...> { /* uses `V` in a local class */ }
