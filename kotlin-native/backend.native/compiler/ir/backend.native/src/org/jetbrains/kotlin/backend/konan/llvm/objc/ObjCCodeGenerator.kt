@@ -24,7 +24,7 @@ internal open class ObjCCodeGenerator(val codegen: CodeGenerator) {
 
     fun FunctionGenerationContext.genGetLinkedClass(name: String): LLVMValueRef {
         val classRef = dataGenerator.genClassRef(name)
-        return load(classRef.llvm)
+        return load2(classRef.llvmType, classRef.llvm)
     }
 
     private val objcMsgSend = llvm.externalNativeRuntimeFunction(
@@ -88,5 +88,5 @@ internal open class ObjCCodeGenerator(val codegen: CodeGenerator) {
 internal fun FunctionGenerationContext.genObjCSelector(selector: String): LLVMValueRef {
     val selectorRef = codegen.objCDataGenerator!!.genSelectorRef(selector)
     // TODO: clang emits it with `invariant.load` metadata.
-    return load(selectorRef.llvm)
+    return load2(selectorRef.llvmType, selectorRef.llvm)
 }
